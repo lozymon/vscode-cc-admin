@@ -18,6 +18,7 @@ export interface Hooks {
 export interface Permissions {
   allow: string[];
   deny: string[];
+  defaultMode?: 'default' | 'acceptEdits' | 'plan' | 'auto' | 'dontAsk' | 'bypassPermissions';
 }
 
 export interface McpServer {
@@ -33,6 +34,10 @@ export interface McpJson {
 export interface Settings {
   model?: string;
   smallModel?: string;
+  effortLevel?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+  alwaysThinkingEnabled?: boolean;
+  showThinkingSummaries?: boolean;
+  maxThinkingTokens?: number;
   permissions?: Permissions;
   hooks?: Hooks;
   mcpServers?: Record<string, McpServer>;
@@ -40,7 +45,11 @@ export interface Settings {
   systemPrompt?: string;
   appendSystemPrompt?: string;
   bashTimeout?: number;
-  maxThinkingTokens?: number;
+  viewMode?: 'default' | 'verbose' | 'focus';
+  language?: string;
+  includeGitInstructions?: boolean;
+  cleanupPeriodDays?: number;
+  respectGitignore?: boolean;
 }
 
 export interface SettingsLocal {

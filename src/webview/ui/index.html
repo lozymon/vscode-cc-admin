@@ -501,6 +501,50 @@
                 <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Haiku 4.5</option>
               </select>
             </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Effort</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Effort Level</label>
+              <select id="effort-level-select">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="xhigh">Extra High</option>
+                <option value="max">Max</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Thinking</div>
+          <div class="card-body">
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Extended Thinking</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Always enable thinking mode across all sessions</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="thinking-toggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Show Thinking Summaries</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Display summaries of Claude's reasoning process</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="thinking-summaries-toggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
             <div class="save-bar">
               <button id="save-model">Save</button>
             </div>
@@ -539,6 +583,52 @@
             <div class="field">
               <label>Append to System Prompt</label>
               <textarea id="append-system-prompt" style="min-height:120px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Behaviour</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Default View Mode</label>
+              <select id="view-mode">
+                <option value="">— default —</option>
+                <option value="default">Default</option>
+                <option value="verbose">Verbose</option>
+                <option value="focus">Focus</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Response Language</label>
+              <input id="language" placeholder="e.g. japanese, spanish, french">
+            </div>
+            <div class="field">
+              <label>Session Cleanup Period (days)</label>
+              <input id="cleanup-period-days" type="number" placeholder="30">
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Include Git Instructions</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Add built-in git workflow guidance to system prompt</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="include-git-instructions" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Respect .gitignore</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">@ file picker respects .gitignore rules</div>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="respect-gitignore" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -600,6 +690,23 @@
 
       <!-- Permissions -->
       <section id="sec-permissions">
+        <div class="card">
+          <div class="card-header">Default Mode</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Permission Mode</label>
+              <select id="permissions-default-mode">
+                <option value="">— default —</option>
+                <option value="default">Default</option>
+                <option value="acceptEdits">Accept Edits</option>
+                <option value="plan">Plan</option>
+                <option value="auto">Auto</option>
+                <option value="dontAsk">Don't Ask</option>
+                <option value="bypassPermissions">Bypass Permissions</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-header">Allow</div>
           <div class="card-body">

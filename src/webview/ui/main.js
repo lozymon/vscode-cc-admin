@@ -146,8 +146,12 @@ function renderDashboard() {
 function renderModel() {
   const cfg = getConfig();
   if (!cfg) return;
-  document.getElementById('model-select').value = cfg.settings?.model ?? 'claude-sonnet-4-6';
-  document.getElementById('small-model-select').value = cfg.settings?.smallModel ?? '';
+  const s = cfg.settings ?? {};
+  document.getElementById('model-select').value = s.model ?? 'claude-sonnet-4-6';
+  document.getElementById('small-model-select').value = s.smallModel ?? '';
+  document.getElementById('effort-level-select').value = s.effortLevel ?? 'medium';
+  document.getElementById('thinking-toggle').checked = s.alwaysThinkingEnabled ?? false;
+  document.getElementById('thinking-summaries-toggle').checked = s.showThinkingSummaries ?? false;
 }
 
 document.getElementById('save-model').addEventListener('click', () => {
@@ -156,6 +160,9 @@ document.getElementById('save-model').addEventListener('click', () => {
     scope: currentScope,
     model: document.getElementById('model-select').value,
     smallModel: document.getElementById('small-model-select').value,
+    effortLevel: document.getElementById('effort-level-select').value,
+    alwaysThinkingEnabled: document.getElementById('thinking-toggle').checked,
+    showThinkingSummaries: document.getElementById('thinking-summaries-toggle').checked,
   });
 });
 
@@ -216,6 +223,11 @@ function renderAdvanced() {
     document.getElementById('append-system-prompt').value = s.appendSystemPrompt ?? '';
   document.getElementById('bash-timeout').value = s.bashTimeout ?? '';
   document.getElementById('max-thinking-tokens').value = s.maxThinkingTokens ?? '';
+  document.getElementById('view-mode').value = s.viewMode ?? '';
+  document.getElementById('language').value = s.language ?? '';
+  document.getElementById('cleanup-period-days').value = s.cleanupPeriodDays ?? '';
+  document.getElementById('include-git-instructions').checked = s.includeGitInstructions ?? true;
+  document.getElementById('respect-gitignore').checked = s.respectGitignore ?? true;
 }
 
 document.getElementById('save-advanced').addEventListener('click', () => {
@@ -226,6 +238,11 @@ document.getElementById('save-advanced').addEventListener('click', () => {
     appendSystemPrompt: document.getElementById('append-system-prompt').value,
     bashTimeout: document.getElementById('bash-timeout').value,
     maxThinkingTokens: document.getElementById('max-thinking-tokens').value,
+    viewMode: document.getElementById('view-mode').value,
+    language: document.getElementById('language').value,
+    cleanupPeriodDays: document.getElementById('cleanup-period-days').value,
+    includeGitInstructions: document.getElementById('include-git-instructions').checked,
+    respectGitignore: document.getElementById('respect-gitignore').checked,
   });
 });
 
@@ -330,6 +347,7 @@ function renderPermissions() {
   const cfg = getConfig();
   if (!cfg) return;
   const perms = cfg.settings?.permissions ?? { allow: [], deny: [] };
+  document.getElementById('permissions-default-mode').value = perms.defaultMode ?? '';
   renderTags('allow-tags', perms.allow ?? [], 'allow');
   renderTags('deny-tags', perms.deny ?? [], 'deny');
 }
@@ -374,7 +392,11 @@ document.getElementById('allow-input').addEventListener('keydown', e => { if (e.
 document.getElementById('deny-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPermission('deny'); });
 document.getElementById('save-permissions').addEventListener('click', () => {
   const cfg = getConfig();
-  vscode.postMessage({ type: 'savePermissions', scope: currentScope, permissions: cfg.settings?.permissions });
+  const perms = { ...(cfg.settings?.permissions ?? { allow: [], deny: [] }) };
+  const mode = document.getElementById('permissions-default-mode').value;
+  if (mode) perms.defaultMode = mode;
+  else delete perms.defaultMode;
+  vscode.postMessage({ type: 'savePermissions', scope: currentScope, permissions: perms });
 });
 
 // --- Hooks ---

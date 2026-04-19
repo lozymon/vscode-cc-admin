@@ -68,7 +68,13 @@ export class WebviewPanel {
         });
         break;
       case 'saveModel':
-        this.saveSettings(msg.scope, { model: msg.model, smallModel: msg.smallModel || undefined });
+        this.saveSettings(msg.scope, {
+          model: msg.model,
+          smallModel: msg.smallModel || undefined,
+          effortLevel: msg.effortLevel || undefined,
+          alwaysThinkingEnabled: msg.alwaysThinkingEnabled,
+          showThinkingSummaries: msg.showThinkingSummaries,
+        });
         break;
       case 'saveAdvanced':
         this.saveSettings(msg.scope, {
@@ -76,6 +82,11 @@ export class WebviewPanel {
           appendSystemPrompt: msg.appendSystemPrompt || undefined,
           bashTimeout: msg.bashTimeout ? Number(msg.bashTimeout) : undefined,
           maxThinkingTokens: msg.maxThinkingTokens ? Number(msg.maxThinkingTokens) : undefined,
+          viewMode: msg.viewMode || undefined,
+          language: msg.language || undefined,
+          cleanupPeriodDays: msg.cleanupPeriodDays ? Number(msg.cleanupPeriodDays) : undefined,
+          includeGitInstructions: msg.includeGitInstructions,
+          respectGitignore: msg.respectGitignore,
         });
         break;
       case 'saveEnv':
