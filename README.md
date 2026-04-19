@@ -4,6 +4,9 @@ A VSCode extension that provides a modern GUI admin panel for managing all Claud
 
 ## Features
 
+### Initialize Project
+A setup wizard for projects that don't have Claude Code configured yet. Detects missing configuration and shows a warning banner on the dashboard. The wizard lets you choose a model, edit the CLAUDE.md template, select which directories to scaffold (`rules/`, `commands/`, `skills/`, `workflows/`), and optionally create a `.claudeignore`. Safe to run on already-initialized projects — existing files are never overwritten.
+
 ### Dashboard
 A live overview of your Claude Code setup: model, MCP server count, permissions, hooks, env vars, memory files, and project file counts. Click any card to jump to that section.
 
