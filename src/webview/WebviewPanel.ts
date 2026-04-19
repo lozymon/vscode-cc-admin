@@ -149,6 +149,16 @@ export class WebviewPanel {
       case 'saveMemoryMd':
         this.config.saveMemoryMd(msg.content);
         break;
+      case 'readFile': {
+        const content = fs.existsSync(msg.filePath) ? fs.readFileSync(msg.filePath, 'utf8') : '';
+        this.panel.webview.postMessage({ type: 'fileContent', filePath: msg.filePath, content });
+        break;
+      }
+      case 'saveFileContent':
+        fs.writeFileSync(msg.filePath, msg.content, 'utf8');
+        this.config.reload();
+        this.panel.webview.postMessage({ type: 'stateUpdate', state: this.buildState() });
+        break;
       case 'openFile':
         vscode.window.showTextDocument(vscode.Uri.file(msg.filePath));
         break;

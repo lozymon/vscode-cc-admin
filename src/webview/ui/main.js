@@ -5,22 +5,23 @@ let currentScope = 'project';
 let currentSection = 'dashboard';
 
 // --- CodeMirror editors ---
-const editors = {};
+const mdEditors = {}; // id → { view, getValue, setValue }
 
-function getOrCreateEditor(id, initialDoc, onChange) {
-  if (editors[id]) return editors[id];
+function getOrCreateMdEditor(id, initialDoc, onChange, height = '400px') {
+  if (mdEditors[id]) return mdEditors[id];
   const container = document.getElementById(id);
   if (!container) return null;
-  container.innerHTML = '';
-  container.style.height = container.dataset.height || '360px';
-  const view = CM.createEditor(container, initialDoc, onChange);
-  editors[id] = view;
-  return view;
+  const ed = CM.createMarkdownEditor(container, initialDoc, { onChange, height });
+  mdEditors[id] = ed;
+  return ed;
 }
 
 function editorValue(id) {
-  return editors[id] ? editors[id].state.doc.toString() : '';
+  return mdEditors[id] ? mdEditors[id].getValue() : '';
 }
+
+// Inline file editors: type → { filePath, ed }
+const inlineEditors = {};
 
 let mcpEnvRows = [];
 let mcpHeaderRows = [];
@@ -79,6 +80,8 @@ window.addEventListener('message', event => {
     clearAllDirty();
     showToast('Saved');
     render();
+  } else if (msg.type === 'fileContent') {
+    window._onFileContent(msg.filePath, msg.content);
   }
 });
 
@@ -702,8 +705,8 @@ document.getElementById('save-hooks').addEventListener('click', () => {
 // --- CLAUDE.md ---
 function renderClaudeMd() {
   const content = state.project?.claudeMd ?? '';
-  const ed = getOrCreateEditor('claudemd-editor', content, () => markEditorDirty('save-claudemd'));
-  if (ed) CM.setEditorContent(ed, content);
+  const ed = getOrCreateMdEditor('claudemd-editor', content, () => markEditorDirty('save-claudemd'), '500px');
+  if (ed) ed.setValue(content);
 }
 document.getElementById('save-claudemd').addEventListener('click', () => {
   vscode.postMessage({ type: 'saveClaudeMd', content: editorValue('claudemd-editor') });
@@ -712,8 +715,8 @@ document.getElementById('save-claudemd').addEventListener('click', () => {
 // --- .claudeignore ---
 function renderClaudeIgnore() {
   const content = state.project?.claudeIgnore ?? '';
-  const ed = getOrCreateEditor('claudeignore-editor', content, () => markEditorDirty('save-claudeignore'));
-  if (ed) CM.setEditorContent(ed, content);
+  const ed = getOrCreateMdEditor('claudeignore-editor', content, () => markEditorDirty('save-claudeignore'), '300px');
+  if (ed) ed.setValue(content);
 }
 document.getElementById('save-claudeignore').addEventListener('click', () => {
   vscode.postMessage({ type: 'saveClaudeIgnore', content: editorValue('claudeignore-editor') });
@@ -723,8 +726,8 @@ document.getElementById('save-claudeignore').addEventListener('click', () => {
 function renderMemory() {
   const glob = state.global;
   const content = glob?.memoryMd ?? '';
-  const ed = getOrCreateEditor('memory-md-editor', content, () => markEditorDirty('save-memory-md'));
-  if (ed) CM.setEditorContent(ed, content);
+  const ed = getOrCreateMdEditor('memory-md-editor', content, () => markEditorDirty('save-memory-md'), '400px');
+  if (ed) ed.setValue(content);
 
   const list = document.getElementById('memory-files-list');
   const empty = document.getElementById('memory-files-empty');
@@ -767,18 +770,23 @@ function renderFileSection(type) {
     container.innerHTML = `<div class="empty">No ${type} yet.</div>`;
     return;
   }
+  const activeFile = inlineEditors[type]?.filePath;
   files.forEach(f => {
     const div = document.createElement('div');
-    div.className = 'file-item';
+    div.className = 'file-item' + (f.filePath === activeFile ? ' file-item-active' : '');
     div.innerHTML = `
       <span class="name">${esc(f.name)}</span>
       <span class="desc">${esc(f.firstLine.replace(/^#+\s*/, ''))}</span>
       <span class="actions">
-        <button class="icon-btn secondary open-file" data-path="${esc(f.filePath)}">Open</button>
+        <button class="icon-btn secondary edit-inline" data-path="${esc(f.filePath)}" data-name="${esc(f.name)}" data-type="${type}">${f.filePath === activeFile ? 'Close' : 'Edit'}</button>
+        <button class="icon-btn secondary open-file" data-path="${esc(f.filePath)}">↗</button>
         <button class="icon-btn danger delete-file" data-path="${esc(f.filePath)}" data-name="${esc(f.name)}">✕</button>
       </span>
     `;
     container.appendChild(div);
+  });
+  container.querySelectorAll('.edit-inline').forEach(btn => {
+    btn.addEventListener('click', () => toggleInlineEditor(btn.dataset.type, btn.dataset.path, btn.dataset.name));
   });
   container.querySelectorAll('.open-file').forEach(btn => {
     btn.addEventListener('click', () => vscode.postMessage({ type: 'openFile', filePath: btn.dataset.path }));
@@ -787,6 +795,67 @@ function renderFileSection(type) {
     btn.addEventListener('click', () => vscode.postMessage({ type: 'deleteFile', filePath: btn.dataset.path, name: btn.dataset.name }));
   });
 }
+
+function toggleInlineEditor(type, filePath, name) {
+  const wrap = document.getElementById(`inline-editor-${type}`);
+  if (!wrap) return;
+  if (inlineEditors[type]?.filePath === filePath) {
+    // Close
+    delete inlineEditors[type];
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    renderFileSection(type);
+    return;
+  }
+  // Open — request file content from extension
+  inlineEditors[type] = { filePath, name, ed: null };
+  vscode.postMessage({ type: 'readFile', filePath });
+  renderFileSection(type);
+}
+
+function openInlineEditor(type, filePath, name, content) {
+  const wrap = document.getElementById(`inline-editor-${type}`);
+  if (!wrap) return;
+  wrap.style.display = 'block';
+  wrap.innerHTML = '';
+
+  // Header bar
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:8px';
+  header.innerHTML = `<span style="font-size:12px;font-weight:600;opacity:0.7">${esc(name)}.md</span>`;
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Save';
+  saveBtn.id = `save-inline-${type}`;
+  saveBtn.addEventListener('click', () => {
+    const ed = inlineEditors[type]?.ed;
+    if (!ed) return;
+    vscode.postMessage({ type: 'saveFileContent', filePath, content: ed.getValue() });
+  });
+  header.appendChild(saveBtn);
+  wrap.appendChild(header);
+
+  // Editor container
+  const edContainer = document.createElement('div');
+  edContainer.id = `cm-inline-${type}`;
+  wrap.appendChild(edContainer);
+
+  const ed = CM.createMarkdownEditor(edContainer, content, {
+    onChange: () => saveBtn.classList.add('dirty'),
+    height: '380px',
+  });
+  inlineEditors[type].ed = ed;
+}
+
+// Handle fileContent message from extension
+window._fileContentHandlers = window._fileContentHandlers || {};
+window._onFileContent = function(filePath, content) {
+  for (const [type, info] of Object.entries(inlineEditors)) {
+    if (info.filePath === filePath) {
+      openInlineEditor(type, filePath, info.name, content);
+      return;
+    }
+  }
+};
 
 document.querySelectorAll('.add-file-btn').forEach(btn => {
   btn.addEventListener('click', () => {
