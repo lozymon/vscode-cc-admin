@@ -10,7 +10,7 @@ document.querySelectorAll('.scope-tab').forEach(btn => {
     currentScope = btn.dataset.scope;
     document.querySelectorAll('.scope-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    // hide project-only nav items in global scope
+    document.getElementById('topbar-scope').textContent = currentScope === 'project' ? 'Project' : 'Global';
     document.querySelectorAll('.project-only').forEach(el => {
       el.style.display = currentScope === 'global' ? 'none' : '';
     });
@@ -30,6 +30,12 @@ function activateSection(name) {
   currentSection = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.section === name));
   document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === `sec-${name}`));
+  const activeBtn = document.querySelector(`.nav-btn[data-section="${name}"]`);
+  if (activeBtn) {
+    const label = activeBtn.textContent.trim();
+    document.getElementById('topbar-title').textContent = label;
+  }
+  document.getElementById('topbar-scope').textContent = currentScope === 'project' ? 'Project' : 'Global';
   render();
 }
 

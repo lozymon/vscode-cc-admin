@@ -17,188 +17,578 @@
       --btn-hover: var(--vscode-button-hoverBackground);
       --tag-bg: var(--vscode-badge-background);
       --tag-fg: var(--vscode-badge-foreground);
-      --section-bg: var(--vscode-sideBar-background);
+      --sidebar-bg: var(--vscode-sideBar-background);
+      --item-hover: var(--vscode-list-hoverBackground);
+      --item-active: var(--vscode-list-activeSelectionBackground);
+      --item-active-fg: var(--vscode-list-activeSelectionForeground);
       --accent: var(--vscode-focusBorder);
+      --card-bg: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+      --radius: 6px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--vscode-font-family); font-size: 13px; color: var(--fg); background: var(--bg); padding: 0; }
+    body {
+      font-family: var(--vscode-font-family);
+      font-size: 13px;
+      color: var(--fg);
+      background: var(--bg);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-    header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
-    header h1 { font-size: 14px; font-weight: 600; }
-    .scope-tabs { display: flex; gap: 4px; margin-left: auto; }
-    .scope-tab { padding: 4px 12px; border: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; border-radius: 3px; font-size: 12px; }
-    .scope-tab.active { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 200px;
+      min-width: 200px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-    .nav { display: flex; gap: 2px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-    .nav-btn { padding: 4px 10px; border: none; background: transparent; color: var(--fg); cursor: pointer; border-radius: 3px; font-size: 12px; opacity: 0.7; }
-    .nav-btn:hover { background: var(--section-bg); opacity: 1; }
-    .nav-btn.active { background: var(--section-bg); opacity: 1; font-weight: 600; border-bottom: 2px solid var(--accent); }
+    .sidebar-header {
+      padding: 16px 14px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-header h1 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 10px;
+    }
 
-    main { padding: 16px; max-width: 800px; }
+    .scope-switch {
+      display: flex;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2px;
+      gap: 2px;
+    }
+    .scope-tab {
+      flex: 1;
+      padding: 4px 0;
+      border: none;
+      background: transparent;
+      color: var(--fg);
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.6;
+      transition: all 0.15s;
+    }
+    .scope-tab.active {
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      opacity: 1;
+    }
+
+    .nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .nav-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      padding: 8px 8px 4px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border: none;
+      background: transparent;
+      color: var(--fg);
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 12px;
+      text-align: left;
+      width: 100%;
+      opacity: 0.75;
+      transition: all 0.1s;
+    }
+    .nav-btn:hover { background: var(--item-hover); opacity: 1; }
+    .nav-btn.active {
+      background: var(--item-active);
+      color: var(--item-active-fg);
+      opacity: 1;
+      font-weight: 600;
+    }
+    .nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+
+    /* ── Main ── */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+    }
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .topbar-scope-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
 
     section { display: none; }
     section.active { display: block; }
 
-    h2 { font-size: 13px; font-weight: 600; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-    h3 { font-size: 12px; font-weight: 600; margin: 12px 0 6px; color: var(--fg); opacity: 0.8; }
-
-    label { display: block; margin-bottom: 4px; font-size: 12px; opacity: 0.8; }
-    input, select, textarea {
-      width: 100%; padding: 5px 8px; background: var(--input-bg); color: var(--input-fg);
-      border: 1px solid var(--input-border); border-radius: 3px; font-size: 12px; font-family: inherit;
+    /* ── Cards ── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
     }
-    input:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); }
-    textarea { resize: vertical; min-height: 300px; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; }
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.6;
+    }
+    .card-body { padding: 16px; }
 
-    .field { margin-bottom: 12px; }
+    h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+    h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 0 0 10px; }
+
+    /* ── Form ── */
+    label { display: block; margin-bottom: 5px; font-size: 12px; opacity: 0.75; }
+    input, select, textarea {
+      width: 100%;
+      padding: 6px 10px;
+      background: var(--input-bg);
+      color: var(--input-fg);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 300px;
+      font-family: var(--vscode-editor-font-family, monospace);
+      font-size: 12px;
+    }
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
     .row { display: flex; gap: 8px; align-items: center; }
 
-    button { padding: 5px 12px; background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
+    /* ── Buttons ── */
+    button {
+      padding: 6px 14px;
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
     button:hover { background: var(--btn-hover); }
-    button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
-    button.secondary:hover { background: var(--section-bg); }
-    button.danger { background: var(--vscode-errorForeground); color: #fff; }
-    button.icon-btn { padding: 3px 6px; font-size: 11px; }
+    button.secondary {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover { background: var(--item-hover); }
+    button.danger {
+      background: transparent;
+      color: var(--vscode-errorForeground);
+      border: 1px solid var(--vscode-errorForeground);
+    }
+    button.danger:hover { background: var(--vscode-errorForeground); color: #fff; }
+    button.icon-btn { padding: 3px 8px; font-size: 11px; }
+    button.ghost {
+      background: transparent;
+      color: var(--fg);
+      border: none;
+      opacity: 0.6;
+      padding: 4px 8px;
+    }
+    button.ghost:hover { opacity: 1; background: var(--item-hover); }
 
-    .tag-list { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; min-height: 28px; }
-    .tag { display: flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--tag-bg); color: var(--tag-fg); border-radius: 10px; font-size: 11px; }
-    .tag button { background: transparent; color: inherit; padding: 0; font-size: 13px; line-height: 1; }
+    /* ── Save bar ── */
+    .save-bar {
+      display: flex;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
 
+    /* ── Tags ── */
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; margin-bottom: 10px; }
+    .tag {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .tag button {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.7;
+      border: none;
+    }
+    .tag button:hover { opacity: 1; background: transparent; }
+
+    /* ── Table ── */
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); font-weight: 600; opacity: 0.7; }
-    td { padding: 6px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,0.1)); vertical-align: middle; }
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.5;
+    }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--item-hover); }
 
-    .toggle { position: relative; display: inline-block; width: 32px; height: 18px; }
+    /* ── Toggle ── */
+    .toggle { position: relative; display: inline-block; width: 34px; height: 20px; }
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 18px; cursor: pointer; transition: 0.2s; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
     .toggle input:checked + .toggle-slider { background: var(--accent); }
-    .toggle-slider:before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
     .toggle input:checked + .toggle-slider:before { transform: translateX(14px); }
 
+    /* ── File list ── */
     .file-list { display: flex; flex-direction: column; gap: 4px; }
-    .file-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--section-bg); border-radius: 3px; cursor: pointer; }
-    .file-item:hover { background: var(--input-bg); }
-    .file-item .name { font-weight: 500; flex: 0 0 auto; }
-    .file-item .desc { opacity: 0.6; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--item-hover);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.1s;
+    }
+    .file-item:hover { border-color: var(--border); }
+    .file-item .name { font-weight: 600; font-size: 12px; flex: 0 0 auto; }
+    .file-item .desc { opacity: 0.55; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
     .file-item .actions { display: flex; gap: 4px; flex: 0 0 auto; }
 
-    .hook-item { background: var(--section-bg); border-radius: 3px; padding: 8px; margin-bottom: 6px; }
-    .hook-event { font-size: 11px; font-weight: 600; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; }
-    .hook-matcher { font-size: 11px; color: var(--accent); margin-bottom: 2px; }
+    /* ── Hook item ── */
+    .hook-item {
+      background: var(--item-hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .hook-event {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .hook-matcher { font-size: 11px; opacity: 0.65; margin-bottom: 4px; }
     .hook-command { font-family: monospace; font-size: 11px; word-break: break-all; }
-    .hook-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .hook-actions { display: flex; gap: 4px; margin-top: 8px; }
 
-    .empty { opacity: 0.5; font-size: 12px; padding: 8px 0; }
-    .save-bar { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; border-top: 1px solid var(--border); margin-top: 16px; display: flex; gap: 8px; }
+    /* ── Inline form ── */
+    .inline-form {
+      background: var(--sidebar-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-top: 12px;
+    }
+    .inline-form h3 { margin-bottom: 12px; }
+
+    .empty { opacity: 0.45; font-size: 12px; padding: 8px 0; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>☁ Claude Code Admin</h1>
-    <div class="scope-tabs">
-      <button class="scope-tab active" data-scope="project">PROJECT</button>
-      <button class="scope-tab" data-scope="global">GLOBAL</button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Claude Code</h1>
+      <div class="scope-switch">
+        <button class="scope-tab active" data-scope="project">Project</button>
+        <button class="scope-tab" data-scope="global">Global</button>
+      </div>
     </div>
-  </header>
+    <nav class="nav">
+      <div class="nav-group-label">Settings</div>
+      <button class="nav-btn active" data-section="model">
+        <span class="nav-icon">⚙</span> Model
+      </button>
+      <button class="nav-btn" data-section="mcp">
+        <span class="nav-icon">⚡</span> MCP Servers
+      </button>
+      <button class="nav-btn" data-section="permissions">
+        <span class="nav-icon">🔒</span> Permissions
+      </button>
+      <button class="nav-btn" data-section="hooks">
+        <span class="nav-icon">🪝</span> Hooks
+      </button>
+      <div class="nav-group-label project-only">Project Files</div>
+      <button class="nav-btn project-only" data-section="claudeMd">
+        <span class="nav-icon">📄</span> CLAUDE.md
+      </button>
+      <button class="nav-btn project-only" data-section="rules">
+        <span class="nav-icon">📏</span> Rules
+      </button>
+      <button class="nav-btn project-only" data-section="commands">
+        <span class="nav-icon">💬</span> Commands
+      </button>
+      <button class="nav-btn project-only" data-section="skills">
+        <span class="nav-icon">🛠</span> Skills
+      </button>
+      <button class="nav-btn project-only" data-section="workflows">
+        <span class="nav-icon">🔄</span> Workflows
+      </button>
+    </nav>
+  </aside>
 
-  <div class="nav">
-    <button class="nav-btn active" data-section="model">Model</button>
-    <button class="nav-btn" data-section="mcp">MCP Servers</button>
-    <button class="nav-btn" data-section="permissions">Permissions</button>
-    <button class="nav-btn" data-section="hooks">Hooks</button>
-    <button class="nav-btn project-only" data-section="claudeMd">CLAUDE.md</button>
-    <button class="nav-btn project-only" data-section="rules">Rules</button>
-    <button class="nav-btn project-only" data-section="commands">Commands</button>
-    <button class="nav-btn project-only" data-section="skills">Skills</button>
-    <button class="nav-btn project-only" data-section="workflows">Workflows</button>
-  </div>
+  <!-- Main area -->
+  <div class="main-area">
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Model</span>
+      <span class="topbar-scope-badge" id="topbar-scope">Project</span>
+    </div>
+    <div class="content">
 
-  <main>
-    <!-- Model -->
-    <section id="sec-model" class="active">
-      <h2>Model</h2>
-      <div class="field">
-        <label>Model</label>
-        <select id="model-select">
-          <option value="claude-opus-4-7">claude-opus-4-7 (Opus 4.7)</option>
-          <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Sonnet 4.6)</option>
-          <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (Haiku 4.5)</option>
-        </select>
-      </div>
-      <div class="save-bar"><button id="save-model">Save Model</button></div>
-    </section>
-
-    <!-- MCP Servers -->
-    <section id="sec-mcp">
-      <h2>MCP Servers</h2>
-      <table id="mcp-table">
-        <thead><tr><th>Name</th><th>Command</th><th>Args</th><th>Enabled</th><th></th></tr></thead>
-        <tbody id="mcp-tbody"></tbody>
-      </table>
-      <div style="margin-top:10px">
-        <button id="add-mcp-btn">+ Add Server</button>
-      </div>
-      <div id="mcp-add-form" style="display:none; margin-top:12px; background:var(--section-bg); padding:10px; border-radius:4px;">
-        <h3>New MCP Server</h3>
-        <div class="field"><label>Name</label><input id="mcp-name" placeholder="my-server"></div>
-        <div class="field"><label>Command</label><input id="mcp-cmd" placeholder="npx"></div>
-        <div class="field"><label>Args (space separated)</label><input id="mcp-args" placeholder="-y @scope/package-mcp"></div>
-        <div class="row"><button id="mcp-add-confirm">Add</button><button class="secondary" id="mcp-add-cancel">Cancel</button></div>
-      </div>
-    </section>
-
-    <!-- Permissions -->
-    <section id="sec-permissions">
-      <h2>Permissions</h2>
-      <h3>Allow</h3>
-      <div class="tag-list" id="allow-tags"></div>
-      <div class="row" style="margin-bottom:12px">
-        <input id="allow-input" placeholder="e.g. Bash(npm run *)" style="flex:1">
-        <button id="allow-add">Add</button>
-      </div>
-      <h3>Deny</h3>
-      <div class="tag-list" id="deny-tags"></div>
-      <div class="row">
-        <input id="deny-input" placeholder="e.g. Edit(.env*)" style="flex:1">
-        <button id="deny-add">Add</button>
-      </div>
-      <div class="save-bar"><button id="save-permissions">Save Permissions</button></div>
-    </section>
-
-    <!-- Hooks -->
-    <section id="sec-hooks">
-      <h2>Hooks</h2>
-      <div id="hooks-list"></div>
-      <div style="margin-top:10px"><button id="add-hook-btn">+ Add Hook</button></div>
-      <div id="hook-add-form" style="display:none; margin-top:12px; background:var(--section-bg); padding:10px; border-radius:4px;">
-        <h3>New Hook</h3>
-        <div class="field">
-          <label>Event</label>
-          <select id="hook-event">
-            <option>PreToolUse</option><option>PostToolUse</option><option>Stop</option><option>Notification</option>
-          </select>
+      <!-- Model -->
+      <section id="sec-model" class="active">
+        <div class="card">
+          <div class="card-header">Model Selection</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Active Model</label>
+              <select id="model-select">
+                <option value="claude-opus-4-7">claude-opus-4-7 — Opus 4.7</option>
+                <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Sonnet 4.6</option>
+                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Haiku 4.5</option>
+              </select>
+            </div>
+            <div class="save-bar">
+              <button id="save-model">Save</button>
+            </div>
+          </div>
         </div>
-        <div class="field"><label>Matcher (regex, optional)</label><input id="hook-matcher" placeholder="Edit|Write"></div>
-        <div class="field"><label>Command</label><input id="hook-command" placeholder="npm run lint --silent"></div>
-        <div class="row"><button id="hook-add-confirm">Add</button><button class="secondary" id="hook-add-cancel">Cancel</button></div>
-      </div>
-      <div class="save-bar"><button id="save-hooks">Save Hooks</button></div>
-    </section>
+      </section>
 
-    <!-- CLAUDE.md -->
-    <section id="sec-claudeMd">
-      <h2>CLAUDE.md</h2>
-      <textarea id="claudemd-editor"></textarea>
-      <div class="save-bar"><button id="save-claudemd">Save CLAUDE.md</button></div>
-    </section>
+      <!-- MCP Servers -->
+      <section id="sec-mcp">
+        <div class="card">
+          <div class="card-header">MCP Servers</div>
+          <div class="card-body" style="padding:0">
+            <table id="mcp-table">
+              <thead>
+                <tr><th>Name</th><th>Command</th><th>Args</th><th>Enabled</th><th></th></tr>
+              </thead>
+              <tbody id="mcp-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <button id="add-mcp-btn">+ Add Server</button>
+        <div id="mcp-add-form" class="inline-form" style="display:none">
+          <h3>New MCP Server</h3>
+          <div class="field"><label>Name</label><input id="mcp-name" placeholder="my-server"></div>
+          <div class="field"><label>Command</label><input id="mcp-cmd" placeholder="npx"></div>
+          <div class="field"><label>Args (space separated)</label><input id="mcp-args" placeholder="-y @scope/package-mcp"></div>
+          <div class="row">
+            <button id="mcp-add-confirm">Add Server</button>
+            <button class="secondary" id="mcp-add-cancel">Cancel</button>
+          </div>
+        </div>
+      </section>
 
-    <!-- File sections: rules, commands, skills, workflows -->
-    <section id="sec-rules"><h2>Rules</h2><div class="file-list" id="files-rules"></div><div style="margin-top:8px"><button class="add-file-btn" data-type="rules">+ New Rule</button></div></section>
-    <section id="sec-commands"><h2>Commands</h2><div class="file-list" id="files-commands"></div><div style="margin-top:8px"><button class="add-file-btn" data-type="commands">+ New Command</button></div></section>
-    <section id="sec-skills"><h2>Skills</h2><div class="file-list" id="files-skills"></div><div style="margin-top:8px"><button class="add-file-btn" data-type="skills">+ New Skill</button></div></section>
-    <section id="sec-workflows"><h2>Workflows</h2><div class="file-list" id="files-workflows"></div><div style="margin-top:8px"><button class="add-file-btn" data-type="workflows">+ New Workflow</button></div></section>
-  </main>
+      <!-- Permissions -->
+      <section id="sec-permissions">
+        <div class="card">
+          <div class="card-header">Allow</div>
+          <div class="card-body">
+            <div class="tag-list" id="allow-tags"></div>
+            <div class="row">
+              <input id="allow-input" placeholder="e.g. Bash(npm run *)" style="flex:1">
+              <button id="allow-add">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Deny</div>
+          <div class="card-body">
+            <div class="tag-list" id="deny-tags"></div>
+            <div class="row">
+              <input id="deny-input" placeholder="e.g. Edit(.env*)" style="flex:1">
+              <button id="deny-add">Add</button>
+            </div>
+          </div>
+        </div>
+        <button id="save-permissions">Save Permissions</button>
+      </section>
+
+      <!-- Hooks -->
+      <section id="sec-hooks">
+        <div class="card">
+          <div class="card-header">Configured Hooks</div>
+          <div class="card-body">
+            <div id="hooks-list"></div>
+          </div>
+        </div>
+        <button id="add-hook-btn">+ Add Hook</button>
+        <div id="hook-add-form" class="inline-form" style="display:none">
+          <h3>New Hook</h3>
+          <div class="field">
+            <label>Event</label>
+            <select id="hook-event">
+              <option>PreToolUse</option>
+              <option>PostToolUse</option>
+              <option>Stop</option>
+              <option>Notification</option>
+            </select>
+          </div>
+          <div class="field"><label>Matcher (regex, optional)</label><input id="hook-matcher" placeholder="Edit|Write"></div>
+          <div class="field"><label>Command</label><input id="hook-command" placeholder="npm run lint --silent"></div>
+          <div class="row">
+            <button id="hook-add-confirm">Add Hook</button>
+            <button class="secondary" id="hook-add-cancel">Cancel</button>
+          </div>
+        </div>
+        <div class="save-bar" style="border:none;padding-top:12px">
+          <button id="save-hooks">Save Hooks</button>
+        </div>
+      </section>
+
+      <!-- CLAUDE.md -->
+      <section id="sec-claudeMd">
+        <div class="card">
+          <div class="card-header">CLAUDE.md</div>
+          <div class="card-body">
+            <textarea id="claudemd-editor"></textarea>
+            <div class="save-bar">
+              <button id="save-claudemd">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- File sections -->
+      <section id="sec-rules">
+        <div class="card">
+          <div class="card-header">Rules</div>
+          <div class="card-body">
+            <div class="file-list" id="files-rules"></div>
+            <div style="margin-top:12px"><button class="add-file-btn" data-type="rules">+ New Rule</button></div>
+          </div>
+        </div>
+      </section>
+      <section id="sec-commands">
+        <div class="card">
+          <div class="card-header">Commands</div>
+          <div class="card-body">
+            <div class="file-list" id="files-commands"></div>
+            <div style="margin-top:12px"><button class="add-file-btn" data-type="commands">+ New Command</button></div>
+          </div>
+        </div>
+      </section>
+      <section id="sec-skills">
+        <div class="card">
+          <div class="card-header">Skills</div>
+          <div class="card-body">
+            <div class="file-list" id="files-skills"></div>
+            <div style="margin-top:12px"><button class="add-file-btn" data-type="skills">+ New Skill</button></div>
+          </div>
+        </div>
+      </section>
+      <section id="sec-workflows">
+        <div class="card">
+          <div class="card-header">Workflows</div>
+          <div class="card-body">
+            <div class="file-list" id="files-workflows"></div>
+            <div style="margin-top:12px"><button class="add-file-btn" data-type="workflows">+ New Workflow</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- .content -->
+  </div><!-- .main-area -->
 
   <script src="main.js"></script>
 </body>
