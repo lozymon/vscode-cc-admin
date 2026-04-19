@@ -4,13 +4,14 @@ import * as path from 'path';
 import {
   ClaudeConfig,
   GlobalConfig,
+  GlobalUserConfig,
   MarkdownFile,
   MemoryFile,
   McpServer,
   Settings,
   SettingsLocal,
 } from './schema';
-import { projectPaths, globalPaths } from './paths';
+import { projectPaths, globalPaths, globalUserConfigPath } from './paths';
 
 export class ConfigManager {
   private _onDidChange = new vscode.EventEmitter<void>();
@@ -20,6 +21,7 @@ export class ConfigManager {
 
   projectConfig: ClaudeConfig = this.emptyProjectConfig();
   globalConfig: GlobalConfig = this.emptyGlobalConfig();
+  globalUserConfig: GlobalUserConfig = {};
 
   constructor() {
     this.reload();
@@ -29,6 +31,7 @@ export class ConfigManager {
   reload() {
     this.projectConfig = this.loadProject();
     this.globalConfig = this.loadGlobal();
+    this.globalUserConfig = this.loadGlobalUserConfig();
   }
 
   private emptyProjectConfig(): ClaudeConfig {
@@ -42,6 +45,7 @@ export class ConfigManager {
       commands: [],
       skills: [],
       workflows: [],
+      agents: [],
     };
   }
 
@@ -52,6 +56,7 @@ export class ConfigManager {
       rules: [],
       skills: [],
       workflows: [],
+      agents: [],
       memoryMd: '',
       memory: [],
     };
@@ -122,6 +127,7 @@ export class ConfigManager {
       commands: this.readMarkdownFiles(p.commands),
       skills: this.readMarkdownFiles(p.skills),
       workflows: this.readMarkdownFiles(p.workflows),
+      agents: this.readMarkdownFiles(p.agents),
     };
   }
 
@@ -136,9 +142,14 @@ export class ConfigManager {
       rules: this.readMarkdownFiles(g.rules),
       skills: this.readMarkdownFiles(g.skills),
       workflows: this.readMarkdownFiles(g.workflows),
+      agents: this.readMarkdownFiles(g.agents),
       memoryMd: this.readText(g.memoryMd),
       memory: this.readMemoryFiles(g.memory),
     };
+  }
+
+  private loadGlobalUserConfig(): GlobalUserConfig {
+    return this.readJson<GlobalUserConfig>(globalUserConfigPath()) ?? {};
   }
 
   private setupWatchers() {
@@ -155,6 +166,7 @@ export class ConfigManager {
       '**/.claude/commands/*.md',
       '**/.claude/skills/*.md',
       '**/.claude/workflows/*.md',
+      '**/.claude/agents/*.md',
     ];
 
     for (const pattern of patterns) {
@@ -168,6 +180,11 @@ export class ConfigManager {
   }
 
   // --- Write methods ---
+
+  get isProjectInitialized(): boolean {
+    const p = projectPaths();
+    return !!p && fs.existsSync(path.dirname(p.settingsJson));
+  }
 
   saveProjectSettings(patch: Partial<Settings>) {
     const p = projectPaths();
@@ -227,28 +244,10 @@ export class ConfigManager {
     this._onDidChange.fire();
   }
 
-  async createMarkdownFile(sectionType: string, name: string, scope: 'project' | 'global') {
-    let dir: string | undefined;
-    if (scope === 'global') {
-      const g = globalPaths();
-      dir = (g as any)[sectionType];
-    } else {
-      const p = projectPaths();
-      if (!p) return;
-      dir = (p as any)[sectionType];
-    }
-    if (!dir) return;
-    fs.mkdirSync(dir, { recursive: true });
-    const filePath = path.join(dir, `${name}.md`);
-    fs.writeFileSync(filePath, `# ${name}\n`, 'utf8');
-    await vscode.window.showTextDocument(vscode.Uri.file(filePath));
+  saveGlobalUserConfig(config: GlobalUserConfig) {
+    this.writeJson(globalUserConfigPath(), config);
     this.reload();
     this._onDidChange.fire();
-  }
-
-  get isProjectInitialized(): boolean {
-    const p = projectPaths();
-    return !!p && fs.existsSync(path.dirname(p.settingsJson));
   }
 
   async initProject(options: {
@@ -279,6 +278,25 @@ export class ConfigManager {
       if (dirPath) fs.mkdirSync(dirPath, { recursive: true });
     }
 
+    this.reload();
+    this._onDidChange.fire();
+  }
+
+  async createMarkdownFile(sectionType: string, name: string, scope: 'project' | 'global') {
+    let dir: string | undefined;
+    if (scope === 'global') {
+      const g = globalPaths();
+      dir = (g as any)[sectionType];
+    } else {
+      const p = projectPaths();
+      if (!p) return;
+      dir = (p as any)[sectionType];
+    }
+    if (!dir) return;
+    fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, `${name}.md`);
+    fs.writeFileSync(filePath, `# ${name}\n`, 'utf8');
+    await vscode.window.showTextDocument(vscode.Uri.file(filePath));
     this.reload();
     this._onDidChange.fire();
   }

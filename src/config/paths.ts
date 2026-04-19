@@ -29,6 +29,7 @@ export function projectPaths() {
     commands: path.join(dir, 'commands'),
     skills: path.join(dir, 'skills'),
     workflows: path.join(dir, 'workflows'),
+    agents: path.join(dir, 'agents'),
   };
 }
 
@@ -40,7 +41,12 @@ export function globalPaths() {
     rules: path.join(dir, 'rules'),
     skills: path.join(dir, 'skills'),
     workflows: path.join(dir, 'workflows'),
+    agents: path.join(dir, 'agents'),
     memoryMd: path.join(dir, 'MEMORY.md'),
     memory: path.join(dir, 'memory'),
   };
+}
+
+export function globalUserConfigPath(): string {
+  return path.join(os.homedir(), '.claude.json');
 }

@@ -1,6 +1,9 @@
 export interface Hook {
-  type: 'command';
-  command: string;
+  type: 'command' | 'http' | 'prompt' | 'agent';
+  command?: string;
+  url?: string;
+  prompt?: string;
+  agent?: string;
 }
 
 export interface HookEntry {
@@ -9,26 +12,72 @@ export interface HookEntry {
 }
 
 export interface Hooks {
+  SessionStart?: HookEntry[];
+  UserPromptSubmit?: HookEntry[];
   PreToolUse?: HookEntry[];
+  PermissionRequest?: HookEntry[];
+  PermissionDenied?: HookEntry[];
   PostToolUse?: HookEntry[];
-  Stop?: HookEntry[];
+  PostToolUseFailure?: HookEntry[];
   Notification?: HookEntry[];
+  SubagentStart?: HookEntry[];
+  SubagentStop?: HookEntry[];
+  TaskCreated?: HookEntry[];
+  TaskCompleted?: HookEntry[];
+  Stop?: HookEntry[];
+  StopFailure?: HookEntry[];
+  TeammateIdle?: HookEntry[];
+  InstructionsLoaded?: HookEntry[];
+  ConfigChange?: HookEntry[];
+  CwdChanged?: HookEntry[];
+  FileChanged?: HookEntry[];
+  WorktreeCreate?: HookEntry[];
+  WorktreeRemove?: HookEntry[];
+  PreCompact?: HookEntry[];
+  PostCompact?: HookEntry[];
+  Elicitation?: HookEntry[];
+  ElicitationResult?: HookEntry[];
+  SessionEnd?: HookEntry[];
 }
 
 export interface Permissions {
   allow: string[];
   deny: string[];
+  ask?: string[];
   defaultMode?: 'default' | 'acceptEdits' | 'plan' | 'auto' | 'dontAsk' | 'bypassPermissions';
 }
 
 export interface McpServer {
-  command: string;
+  type?: 'stdio' | 'sse' | 'http';
+  command?: string;
   args?: string[];
   env?: Record<string, string>;
+  url?: string;
+  headers?: Record<string, string>;
 }
 
 export interface McpJson {
   mcpServers: Record<string, McpServer>;
+}
+
+export interface SandboxFilesystem {
+  allowWrite?: string[];
+  denyWrite?: string[];
+  denyRead?: string[];
+  allowRead?: string[];
+}
+
+export interface SandboxNetwork {
+  allowedDomains?: string[];
+  deniedDomains?: string[];
+  allowLocalBinding?: boolean;
+}
+
+export interface SandboxConfig {
+  enabled?: boolean;
+  excludedCommands?: string[];
+  filesystem?: SandboxFilesystem;
+  network?: SandboxNetwork;
 }
 
 export interface Settings {
@@ -50,6 +99,17 @@ export interface Settings {
   includeGitInstructions?: boolean;
   cleanupPeriodDays?: number;
   respectGitignore?: boolean;
+  autoUpdatesChannel?: 'stable' | 'latest';
+  defaultShell?: 'bash' | 'powershell';
+  outputStyle?: string;
+  attribution?: { commit?: string; pr?: string };
+  prefersReducedMotion?: boolean;
+  availableModels?: string[];
+  autoMemoryDirectory?: string;
+  fastModePerSessionOptIn?: boolean;
+  worktree?: { symlinkDirectories?: string[]; sparsePaths?: string[] };
+  companyAnnouncements?: string[];
+  sandbox?: SandboxConfig;
 }
 
 export interface SettingsLocal {
@@ -70,6 +130,15 @@ export interface MemoryFile {
   content: string;
 }
 
+export interface GlobalUserConfig {
+  editorMode?: 'default' | 'vim';
+  autoScrollEnabled?: boolean;
+  showTurnDuration?: boolean;
+  terminalProgressBarEnabled?: boolean;
+  autoConnectIde?: boolean;
+  autoInstallIdeExtension?: boolean;
+}
+
 export interface ClaudeConfig {
   settings: Settings;
   settingsLocal: SettingsLocal;
@@ -80,6 +149,7 @@ export interface ClaudeConfig {
   commands: MarkdownFile[];
   skills: MarkdownFile[];
   workflows: MarkdownFile[];
+  agents: MarkdownFile[];
 }
 
 export interface GlobalConfig {
@@ -88,6 +158,7 @@ export interface GlobalConfig {
   rules: MarkdownFile[];
   skills: MarkdownFile[];
   workflows: MarkdownFile[];
+  agents: MarkdownFile[];
   memoryMd: string;
   memory: MemoryFile[];
 }

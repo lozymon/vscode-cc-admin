@@ -599,12 +599,32 @@
               </select>
             </div>
             <div class="field">
+              <label>Default Shell</label>
+              <select id="default-shell">
+                <option value="">— default —</option>
+                <option value="bash">bash</option>
+                <option value="powershell">powershell</option>
+              </select>
+            </div>
+            <div class="field">
               <label>Response Language</label>
               <input id="language" placeholder="e.g. japanese, spanish, french">
             </div>
             <div class="field">
+              <label>Output Style</label>
+              <input id="output-style" placeholder="e.g. Explanatory">
+            </div>
+            <div class="field">
               <label>Session Cleanup Period (days)</label>
               <input id="cleanup-period-days" type="number" placeholder="30">
+            </div>
+            <div class="field">
+              <label>Auto Updates Channel</label>
+              <select id="auto-updates-channel">
+                <option value="">— default —</option>
+                <option value="latest">Latest</option>
+                <option value="stable">Stable</option>
+              </select>
             </div>
             <div class="field">
               <div class="row" style="justify-content:space-between">
@@ -612,10 +632,7 @@
                   <div style="font-size:13px;font-weight:500">Include Git Instructions</div>
                   <div style="font-size:11px;opacity:0.55;margin-top:2px">Add built-in git workflow guidance to system prompt</div>
                 </div>
-                <label class="toggle">
-                  <input type="checkbox" id="include-git-instructions" checked>
-                  <span class="toggle-slider"></span>
-                </label>
+                <label class="toggle"><input type="checkbox" id="include-git-instructions" checked><span class="toggle-slider"></span></label>
               </div>
             </div>
             <div class="field">
@@ -624,10 +641,25 @@
                   <div style="font-size:13px;font-weight:500">Respect .gitignore</div>
                   <div style="font-size:11px;opacity:0.55;margin-top:2px">@ file picker respects .gitignore rules</div>
                 </div>
-                <label class="toggle">
-                  <input type="checkbox" id="respect-gitignore" checked>
-                  <span class="toggle-slider"></span>
-                </label>
+                <label class="toggle"><input type="checkbox" id="respect-gitignore" checked><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Fast Mode Per-Session Opt-In</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Require opt-in for fast mode each session</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="fast-mode-per-session"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Prefers Reduced Motion</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Reduce or disable UI animations</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="prefers-reduced-motion"><span class="toggle-slider"></span></label>
               </div>
             </div>
           </div>
@@ -642,6 +674,71 @@
             <div class="field">
               <label>Max Thinking Tokens</label>
               <input id="max-thinking-tokens" type="number" placeholder="8000">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Attribution</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Commit Attribution</label>
+              <input id="attribution-commit" placeholder="Co-Authored-By: ...">
+            </div>
+            <div class="field">
+              <label>PR Attribution</label>
+              <input id="attribution-pr" placeholder="Generated with ...">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Available Models</div>
+          <div class="card-body">
+            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Restrict which models users can select. Leave empty to allow all.</div>
+            <div class="tag-list" id="available-models-tags"></div>
+            <div class="row">
+              <input id="available-models-input" placeholder="e.g. claude-sonnet-4-6" style="flex:1">
+              <button id="available-models-add">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Memory</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Auto Memory Directory</label>
+              <input id="auto-memory-directory" placeholder="~/.claude/memory">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Worktree</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Symlink Directories</label>
+              <div class="tag-list" id="symlink-dirs-tags"></div>
+              <div class="row">
+                <input id="symlink-dirs-input" placeholder="node_modules" style="flex:1">
+                <button id="symlink-dirs-add">Add</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Sparse Paths</label>
+              <div class="tag-list" id="sparse-paths-tags"></div>
+              <div class="row">
+                <input id="sparse-paths-input" placeholder="src/" style="flex:1">
+                <button id="sparse-paths-add">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Company Announcements</div>
+          <div class="card-body">
+            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Messages shown to users at startup.</div>
+            <div class="tag-list" id="announcements-tags"></div>
+            <div class="row">
+              <input id="announcements-input" placeholder="Welcome to the team!" style="flex:1">
+              <button id="announcements-add">Add</button>
             </div>
           </div>
         </div>
@@ -667,8 +764,29 @@
         <div id="mcp-add-form" class="inline-form" style="display:none">
           <h3>New MCP Server</h3>
           <div class="field"><label>Name</label><input id="mcp-name" placeholder="my-server"></div>
-          <div class="field"><label>Command</label><input id="mcp-cmd" placeholder="npx"></div>
-          <div class="field"><label>Args (space separated)</label><input id="mcp-args" placeholder="-y @scope/package-mcp"></div>
+          <div class="field">
+            <label>Type</label>
+            <select id="mcp-type">
+              <option value="stdio">stdio</option>
+              <option value="sse">SSE</option>
+              <option value="http">HTTP</option>
+            </select>
+          </div>
+          <div class="field" id="mcp-cmd-field"><label>Command</label><input id="mcp-cmd" placeholder="npx"></div>
+          <div class="field" id="mcp-args-field"><label>Args (space separated)</label><input id="mcp-args" placeholder="-y @scope/package-mcp"></div>
+          <div class="field" id="mcp-url-field" style="display:none"><label>URL</label><input id="mcp-url" placeholder="https://..."></div>
+          <div class="field" id="mcp-headers-field" style="display:none">
+            <label>Headers (optional)</label>
+            <table style="margin-bottom:8px">
+              <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
+              <tbody id="mcp-headers-tbody"></tbody>
+            </table>
+            <div class="row">
+              <input id="mcp-header-key" placeholder="Authorization" style="flex:1">
+              <input id="mcp-header-val" placeholder="Bearer token" style="flex:2">
+              <button id="mcp-header-add" type="button">Add</button>
+            </div>
+          </div>
           <div class="field">
             <label>Environment Variables (optional)</label>
             <table style="margin-bottom:8px">
@@ -718,6 +836,17 @@
           </div>
         </div>
         <div class="card">
+          <div class="card-header">Ask</div>
+          <div class="card-body">
+            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Prompt for confirmation before allowing these tools (priority between Allow and Deny).</div>
+            <div class="tag-list" id="ask-tags"></div>
+            <div class="row">
+              <input id="ask-input" placeholder="e.g. Bash(sudo *)" style="flex:1">
+              <button id="ask-add">Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
           <div class="card-header">Deny</div>
           <div class="card-body">
             <div class="tag-list" id="deny-tags"></div>
@@ -746,12 +875,46 @@
             <select id="hook-event">
               <option>PreToolUse</option>
               <option>PostToolUse</option>
+              <option>PostToolUseFailure</option>
               <option>Stop</option>
+              <option>StopFailure</option>
               <option>Notification</option>
+              <option>SessionStart</option>
+              <option>SessionEnd</option>
+              <option>UserPromptSubmit</option>
+              <option>PermissionRequest</option>
+              <option>PermissionDenied</option>
+              <option>SubagentStart</option>
+              <option>SubagentStop</option>
+              <option>TaskCreated</option>
+              <option>TaskCompleted</option>
+              <option>TeammateIdle</option>
+              <option>InstructionsLoaded</option>
+              <option>ConfigChange</option>
+              <option>CwdChanged</option>
+              <option>FileChanged</option>
+              <option>WorktreeCreate</option>
+              <option>WorktreeRemove</option>
+              <option>PreCompact</option>
+              <option>PostCompact</option>
+              <option>Elicitation</option>
+              <option>ElicitationResult</option>
             </select>
           </div>
           <div class="field"><label>Matcher (regex, optional)</label><input id="hook-matcher" placeholder="Edit|Write"></div>
-          <div class="field"><label>Command</label><input id="hook-command" placeholder="npm run lint --silent"></div>
+          <div class="field">
+            <label>Hook Type</label>
+            <select id="hook-type">
+              <option value="command">Command</option>
+              <option value="http">HTTP</option>
+              <option value="prompt">Prompt</option>
+              <option value="agent">Agent</option>
+            </select>
+          </div>
+          <div class="field" id="hook-command-field"><label>Command</label><input id="hook-command" placeholder="npm run lint --silent"></div>
+          <div class="field" id="hook-url-field" style="display:none"><label>URL</label><input id="hook-url" placeholder="https://..."></div>
+          <div class="field" id="hook-prompt-field" style="display:none"><label>Prompt</label><input id="hook-prompt" placeholder="Summarize what just happened"></div>
+          <div class="field" id="hook-agent-field" style="display:none"><label>Agent</label><input id="hook-agent" placeholder="my-agent"></div>
           <div class="row">
             <button id="hook-add-confirm">Add Hook</button>
             <button class="secondary" id="hook-add-cancel">Cancel</button>
@@ -842,6 +1005,180 @@
         </div>
       </section>
 
+      <!-- Agents -->
+      <section id="sec-agents">
+        <div class="card">
+          <div class="card-header">Agents</div>
+          <div class="card-body">
+            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Sub-agents with their own tool sets, models, and permission modes.</div>
+            <div class="file-list" id="files-agents"></div>
+            <div style="margin-top:12px"><button class="add-file-btn" data-type="agents">+ New Agent</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sandbox -->
+      <section id="sec-sandbox">
+        <div class="card">
+          <div class="card-header">Sandbox</div>
+          <div class="card-body">
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Enable Sandbox</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Run commands in an isolated sandbox environment</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="sandbox-enabled"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <label>Excluded Commands (not sandboxed)</label>
+              <div class="tag-list" id="sandbox-excluded-tags"></div>
+              <div class="row">
+                <input id="sandbox-excluded-input" placeholder="git" style="flex:1">
+                <button id="sandbox-excluded-add">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Filesystem</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Allow Write</label>
+              <div class="tag-list" id="sandbox-allow-write-tags"></div>
+              <div class="row">
+                <input id="sandbox-allow-write-input" placeholder="/tmp/**" style="flex:1">
+                <button id="sandbox-allow-write-add">Add</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Deny Write</label>
+              <div class="tag-list" id="sandbox-deny-write-tags"></div>
+              <div class="row">
+                <input id="sandbox-deny-write-input" placeholder="/etc/**" style="flex:1">
+                <button id="sandbox-deny-write-add">Add</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Allow Read</label>
+              <div class="tag-list" id="sandbox-allow-read-tags"></div>
+              <div class="row">
+                <input id="sandbox-allow-read-input" placeholder="/usr/share/**" style="flex:1">
+                <button id="sandbox-allow-read-add">Add</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Deny Read</label>
+              <div class="tag-list" id="sandbox-deny-read-tags"></div>
+              <div class="row">
+                <input id="sandbox-deny-read-input" placeholder="~/.ssh/**" style="flex:1">
+                <button id="sandbox-deny-read-add">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Network</div>
+          <div class="card-body">
+            <div class="field">
+              <label>Allowed Domains</label>
+              <div class="tag-list" id="sandbox-allowed-domains-tags"></div>
+              <div class="row">
+                <input id="sandbox-allowed-domains-input" placeholder="api.example.com" style="flex:1">
+                <button id="sandbox-allowed-domains-add">Add</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Denied Domains</label>
+              <div class="tag-list" id="sandbox-denied-domains-tags"></div>
+              <div class="row">
+                <input id="sandbox-denied-domains-input" placeholder="*.tracking.com" style="flex:1">
+                <button id="sandbox-denied-domains-add">Add</button>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Allow Local Binding</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Allow binding to local network ports</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="sandbox-allow-local-binding"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="save-bar" style="border:none;padding-top:0">
+          <button id="save-sandbox">Save Sandbox</button>
+        </div>
+      </section>
+
+      <!-- App Config -->
+      <section id="sec-appconfig">
+        <div class="card">
+          <div class="card-header">App Config (~/.claude.json)</div>
+          <div class="card-body">
+            <div style="font-size:11px;opacity:0.6;margin-bottom:14px">Global user preferences stored in <code>~/.claude.json</code>. These apply to all projects.</div>
+            <div class="field">
+              <label>Editor Mode</label>
+              <select id="appconfig-editor-mode">
+                <option value="">— default —</option>
+                <option value="default">Default</option>
+                <option value="vim">Vim</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Auto Scroll</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Automatically scroll to the latest output</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="appconfig-auto-scroll"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Show Turn Duration</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Display how long each turn took</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="appconfig-show-turn-duration"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Terminal Progress Bar</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Show progress bar in terminal output</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="appconfig-terminal-progress"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Auto Connect IDE</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Automatically connect to IDE when available</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="appconfig-auto-connect-ide"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="field">
+              <div class="row" style="justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500">Auto Install IDE Extension</div>
+                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Automatically install the Claude Code IDE extension</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="appconfig-auto-install-ext"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button id="save-appconfig">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div><!-- .content -->
   </div><!-- .main-area -->
 
@@ -880,6 +1217,12 @@
       <button class="nav-btn" data-section="hooks">
         <span class="nav-icon">🪝</span> Hooks
       </button>
+      <button class="nav-btn" data-section="sandbox">
+        <span class="nav-icon">📦</span> Sandbox
+      </button>
+      <button class="nav-btn" data-section="appconfig">
+        <span class="nav-icon">👤</span> App Config
+      </button>
       <div class="nav-group-label project-only">Project Files</div>
       <button class="nav-btn project-only" data-section="claudeMd">
         <span class="nav-icon">📄</span> CLAUDE.md
@@ -898,6 +1241,9 @@
       </button>
       <button class="nav-btn project-only" data-section="workflows">
         <span class="nav-icon">🔄</span> Workflows
+      </button>
+      <button class="nav-btn project-only" data-section="agents">
+        <span class="nav-icon">🤖</span> Agents
       </button>
       <div class="nav-group-label">Memory</div>
       <button class="nav-btn" data-section="memory">

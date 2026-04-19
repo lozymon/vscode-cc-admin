@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from '../config/ConfigManager';
-import { Settings, SettingsLocal } from '../config/schema';
+import { Settings, SettingsLocal, GlobalUserConfig } from '../config/schema';
 
 export class WebviewPanel {
   static currentPanel: WebviewPanel | undefined;
@@ -56,6 +56,7 @@ export class WebviewPanel {
     return {
       project: this.config.projectConfig,
       global: this.config.globalConfig,
+      globalUserConfig: this.config.globalUserConfig,
       isProjectInitialized: this.config.isProjectInitialized,
     };
   }
@@ -87,6 +88,20 @@ export class WebviewPanel {
           cleanupPeriodDays: msg.cleanupPeriodDays ? Number(msg.cleanupPeriodDays) : undefined,
           includeGitInstructions: msg.includeGitInstructions,
           respectGitignore: msg.respectGitignore,
+          autoUpdatesChannel: msg.autoUpdatesChannel || undefined,
+          defaultShell: msg.defaultShell || undefined,
+          outputStyle: msg.outputStyle || undefined,
+          attribution: (msg.attributionCommit || msg.attributionPr)
+            ? { commit: msg.attributionCommit || undefined, pr: msg.attributionPr || undefined }
+            : undefined,
+          prefersReducedMotion: msg.prefersReducedMotion,
+          availableModels: msg.availableModels?.length ? msg.availableModels : undefined,
+          autoMemoryDirectory: msg.autoMemoryDirectory || undefined,
+          fastModePerSessionOptIn: msg.fastModePerSessionOptIn,
+          worktree: (msg.symlinkDirs?.length || msg.sparsePaths?.length)
+            ? { symlinkDirectories: msg.symlinkDirs, sparsePaths: msg.sparsePaths }
+            : undefined,
+          companyAnnouncements: msg.companyAnnouncements?.length ? msg.companyAnnouncements : undefined,
         });
         break;
       case 'saveEnv':
@@ -108,12 +123,17 @@ export class WebviewPanel {
         });
         break;
       }
-      case 'savePermissions': {
+      case 'savePermissions':
         this.saveSettings(msg.scope, { permissions: msg.permissions });
         break;
-      }
       case 'saveHooks':
         this.saveSettings(msg.scope, { hooks: msg.hooks });
+        break;
+      case 'saveSandbox':
+        this.saveSettings(msg.scope, { sandbox: msg.sandbox });
+        break;
+      case 'saveGlobalUserConfig':
+        this.config.saveGlobalUserConfig(msg.config as GlobalUserConfig);
         break;
       case 'saveClaudeMd':
         this.config.saveClaudeMd(msg.content);
@@ -157,7 +177,6 @@ export class WebviewPanel {
     const uiDir = path.join(this.context.extensionPath, 'src', 'webview', 'ui');
     const htmlPath = path.join(uiDir, 'index.html');
     if (!fs.existsSync(htmlPath)) return '<html><body>UI not found.</body></html>';
-
     const scriptUri = this.panel.webview.asWebviewUri(
       vscode.Uri.file(path.join(uiDir, 'main.js'))
     );

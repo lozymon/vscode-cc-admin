@@ -1,11 +1,17 @@
 const vscode = acquireVsCodeApi();
 
-let state = { project: null, global: null, isProjectInitialized: false };
+let state = { project: null, global: null, globalUserConfig: {}, isProjectInitialized: false };
 let currentScope = 'project';
 let currentSection = 'dashboard';
 
-// temporary env rows for MCP add form
 let mcpEnvRows = [];
+let mcpHeaderRows = [];
+
+// sandbox tag state
+const sandboxTags = {
+  excluded: [], allowWrite: [], denyWrite: [], allowRead: [], denyRead: [],
+  allowedDomains: [], deniedDomains: [],
+};
 
 // --- Nav ---
 document.querySelectorAll('.scope-tab').forEach(btn => {
@@ -17,7 +23,8 @@ document.querySelectorAll('.scope-tab').forEach(btn => {
     document.querySelectorAll('.project-only').forEach(el => {
       el.style.display = currentScope === 'global' ? 'none' : '';
     });
-    if (currentScope === 'global' && ['claudeMd','claudeIgnore','rules','commands','skills','workflows'].includes(currentSection)) {
+    const projectOnlySections = ['claudeMd','claudeIgnore','rules','commands','skills','workflows','agents','init'];
+    if (currentScope === 'global' && projectOnlySections.includes(currentSection)) {
       activateSection('dashboard');
     } else {
       render();
@@ -77,6 +84,9 @@ function render() {
   renderFileSection('commands');
   renderFileSection('skills');
   renderFileSection('workflows');
+  renderFileSection('agents');
+  renderSandbox();
+  renderAppConfig();
 }
 
 // --- Dashboard ---
@@ -91,6 +101,7 @@ function renderDashboard() {
   const mcpCount = Object.keys(proj?.mcpServers ?? {}).length;
   const allowCount = cfg.settings?.permissions?.allow?.length ?? 0;
   const denyCount = cfg.settings?.permissions?.deny?.length ?? 0;
+  const askCount = cfg.settings?.permissions?.ask?.length ?? 0;
   const hookCount = Object.values(cfg.settings?.hooks ?? {}).reduce((n, arr) => n + arr.length, 0);
   const envCount = Object.keys(cfg.settings?.env ?? {}).length;
   const memCount = (glob?.memory ?? []).length;
@@ -99,6 +110,7 @@ function renderDashboard() {
     { label: 'Model', value: cfg.settings?.model ?? 'not set', icon: '⚙', section: 'model' },
     { label: 'MCP Servers', value: mcpCount, icon: '⚡', section: 'mcp' },
     { label: 'Allow Rules', value: allowCount, icon: '✅', section: 'permissions' },
+    { label: 'Ask Rules', value: askCount, icon: '❓', section: 'permissions' },
     { label: 'Deny Rules', value: denyCount, icon: '🚫', section: 'permissions' },
     { label: 'Hooks', value: hookCount, icon: '🪝', section: 'hooks' },
     { label: 'Env Vars', value: envCount, icon: '🌿', section: 'env' },
@@ -111,10 +123,10 @@ function renderDashboard() {
       { label: 'Commands', value: proj?.commands?.length ?? 0, icon: '💬', section: 'commands' },
       { label: 'Skills', value: proj?.skills?.length ?? 0, icon: '🛠', section: 'skills' },
       { label: 'Workflows', value: proj?.workflows?.length ?? 0, icon: '🔄', section: 'workflows' },
+      { label: 'Agents', value: proj?.agents?.length ?? 0, icon: '🤖', section: 'agents' },
     );
   }
 
-  // not-initialized banner
   let banner = document.getElementById('dash-not-init');
   if (!state.isProjectInitialized) {
     if (!banner) {
@@ -213,22 +225,81 @@ document.getElementById('save-env').addEventListener('click', () => {
 });
 
 // --- Advanced ---
+let availableModels = [];
+let symlinkDirs = [];
+let sparsePaths = [];
+let announcements = [];
+
 function renderAdvanced() {
   const cfg = getConfig();
   if (!cfg) return;
   const s = cfg.settings ?? {};
-  if (document.activeElement !== document.getElementById('system-prompt'))
-    document.getElementById('system-prompt').value = s.systemPrompt ?? '';
-  if (document.activeElement !== document.getElementById('append-system-prompt'))
-    document.getElementById('append-system-prompt').value = s.appendSystemPrompt ?? '';
+
+  const sp = document.getElementById('system-prompt');
+  if (document.activeElement !== sp) sp.value = s.systemPrompt ?? '';
+  const asp = document.getElementById('append-system-prompt');
+  if (document.activeElement !== asp) asp.value = s.appendSystemPrompt ?? '';
+
   document.getElementById('bash-timeout').value = s.bashTimeout ?? '';
   document.getElementById('max-thinking-tokens').value = s.maxThinkingTokens ?? '';
   document.getElementById('view-mode').value = s.viewMode ?? '';
+  document.getElementById('default-shell').value = s.defaultShell ?? '';
   document.getElementById('language').value = s.language ?? '';
+  document.getElementById('output-style').value = s.outputStyle ?? '';
   document.getElementById('cleanup-period-days').value = s.cleanupPeriodDays ?? '';
+  document.getElementById('auto-updates-channel').value = s.autoUpdatesChannel ?? '';
   document.getElementById('include-git-instructions').checked = s.includeGitInstructions ?? true;
   document.getElementById('respect-gitignore').checked = s.respectGitignore ?? true;
+  document.getElementById('fast-mode-per-session').checked = s.fastModePerSessionOptIn ?? false;
+  document.getElementById('prefers-reduced-motion').checked = s.prefersReducedMotion ?? false;
+  document.getElementById('attribution-commit').value = s.attribution?.commit ?? '';
+  document.getElementById('attribution-pr').value = s.attribution?.pr ?? '';
+  document.getElementById('auto-memory-directory').value = s.autoMemoryDirectory ?? '';
+
+  availableModels = [...(s.availableModels ?? [])];
+  symlinkDirs = [...(s.worktree?.symlinkDirectories ?? [])];
+  sparsePaths = [...(s.worktree?.sparsePaths ?? [])];
+  announcements = [...(s.companyAnnouncements ?? [])];
+
+  renderTagList('available-models-tags', availableModels, () => renderAdvanced());
+  renderTagList('symlink-dirs-tags', symlinkDirs, () => renderAdvanced());
+  renderTagList('sparse-paths-tags', sparsePaths, () => renderAdvanced());
+  renderTagList('announcements-tags', announcements, () => renderAdvanced());
 }
+
+function renderTagList(containerId, items, onChange) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  items.forEach((item, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${esc(item)} <button data-i="${i}">×</button>`;
+    tag.querySelector('button').addEventListener('click', () => {
+      items.splice(i, 1);
+      onChange();
+    });
+    container.appendChild(tag);
+  });
+}
+
+function addTagFromInput(inputId, arr, onChange) {
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (!val) return;
+  arr.push(val);
+  input.value = '';
+  onChange();
+}
+
+document.getElementById('available-models-add').addEventListener('click', () =>
+  addTagFromInput('available-models-input', availableModels, () => renderTagList('available-models-tags', availableModels, () => {})));
+document.getElementById('symlink-dirs-add').addEventListener('click', () =>
+  addTagFromInput('symlink-dirs-input', symlinkDirs, () => renderTagList('symlink-dirs-tags', symlinkDirs, () => {})));
+document.getElementById('sparse-paths-add').addEventListener('click', () =>
+  addTagFromInput('sparse-paths-input', sparsePaths, () => renderTagList('sparse-paths-tags', sparsePaths, () => {})));
+document.getElementById('announcements-add').addEventListener('click', () =>
+  addTagFromInput('announcements-input', announcements, () => renderTagList('announcements-tags', announcements, () => {})));
 
 document.getElementById('save-advanced').addEventListener('click', () => {
   vscode.postMessage({
@@ -239,10 +310,22 @@ document.getElementById('save-advanced').addEventListener('click', () => {
     bashTimeout: document.getElementById('bash-timeout').value,
     maxThinkingTokens: document.getElementById('max-thinking-tokens').value,
     viewMode: document.getElementById('view-mode').value,
+    defaultShell: document.getElementById('default-shell').value,
     language: document.getElementById('language').value,
+    outputStyle: document.getElementById('output-style').value,
     cleanupPeriodDays: document.getElementById('cleanup-period-days').value,
+    autoUpdatesChannel: document.getElementById('auto-updates-channel').value,
     includeGitInstructions: document.getElementById('include-git-instructions').checked,
     respectGitignore: document.getElementById('respect-gitignore').checked,
+    fastModePerSessionOptIn: document.getElementById('fast-mode-per-session').checked,
+    prefersReducedMotion: document.getElementById('prefers-reduced-motion').checked,
+    attributionCommit: document.getElementById('attribution-commit').value,
+    attributionPr: document.getElementById('attribution-pr').value,
+    autoMemoryDirectory: document.getElementById('auto-memory-directory').value,
+    availableModels,
+    symlinkDirs,
+    sparsePaths,
+    companyAnnouncements: announcements,
   });
 });
 
@@ -258,12 +341,19 @@ function renderMcp() {
   tbody.innerHTML = '';
   for (const [name, srv] of Object.entries(servers)) {
     const enabled = !disabled.has(name);
+    const isHttp = srv.type === 'sse' || srv.type === 'http';
+    const typeLabel = srv.type ?? 'stdio';
+    const commandOrUrl = isHttp ? (srv.url ?? '—') : (srv.command ?? '—');
+    const argsOrHeaders = isHttp
+      ? Object.keys(srv.headers ?? {}).join(', ') || '—'
+      : (srv.args ?? []).join(' ') || '—';
     const envEntries = Object.entries(srv.env ?? {});
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${esc(name)}</strong></td>
-      <td>${esc(srv.command)}</td>
-      <td style="font-family:monospace;font-size:11px">${esc((srv.args ?? []).join(' '))}</td>
+      <td style="font-size:11px;opacity:0.7">${esc(typeLabel)}</td>
+      <td style="font-family:monospace;font-size:11px">${esc(commandOrUrl)}</td>
+      <td style="font-family:monospace;font-size:11px">${esc(argsOrHeaders)}</td>
       <td style="font-size:11px;opacity:0.7">${envEntries.map(([k]) => esc(k)).join(', ') || '—'}</td>
       <td>
         <label class="toggle">
@@ -276,10 +366,9 @@ function renderMcp() {
     tbody.appendChild(tr);
   }
 
-  // update table header if needed
   const thead = document.querySelector('#mcp-table thead tr');
-  if (thead && thead.children.length === 5) {
-    thead.innerHTML = '<th>Name</th><th>Command</th><th>Args</th><th>Env</th><th>Enabled</th><th></th>';
+  if (thead) {
+    thead.innerHTML = '<th>Name</th><th>Type</th><th>Command/URL</th><th>Args/Headers</th><th>Env</th><th>Enabled</th><th></th>';
   }
 
   tbody.querySelectorAll('input[type=checkbox]').forEach(cb => {
@@ -293,6 +382,15 @@ function renderMcp() {
     });
   });
 }
+
+// MCP type toggle
+document.getElementById('mcp-type').addEventListener('change', () => {
+  const isHttp = ['sse', 'http'].includes(document.getElementById('mcp-type').value);
+  document.getElementById('mcp-cmd-field').style.display = isHttp ? 'none' : '';
+  document.getElementById('mcp-args-field').style.display = isHttp ? 'none' : '';
+  document.getElementById('mcp-url-field').style.display = isHttp ? '' : 'none';
+  document.getElementById('mcp-headers-field').style.display = isHttp ? '' : 'none';
+});
 
 // MCP env rows
 document.getElementById('mcp-env-add').addEventListener('click', () => {
@@ -318,28 +416,77 @@ function renderMcpEnvRows() {
   });
 }
 
+// MCP header rows
+document.getElementById('mcp-header-add').addEventListener('click', () => {
+  const k = document.getElementById('mcp-header-key').value.trim();
+  const v = document.getElementById('mcp-header-val').value.trim();
+  if (!k) return;
+  mcpHeaderRows.push({ k, v });
+  document.getElementById('mcp-header-key').value = '';
+  document.getElementById('mcp-header-val').value = '';
+  renderMcpHeaderRows();
+});
+
+function renderMcpHeaderRows() {
+  const tbody = document.getElementById('mcp-headers-tbody');
+  tbody.innerHTML = '';
+  mcpHeaderRows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><code>${esc(row.k)}</code></td><td>${esc(row.v)}</td><td><button class="icon-btn danger" data-i="${i}">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { mcpHeaderRows.splice(Number(btn.dataset.i), 1); renderMcpHeaderRows(); });
+  });
+}
+
 document.getElementById('add-mcp-btn').addEventListener('click', () => {
   document.getElementById('mcp-add-form').style.display = 'block';
 });
 document.getElementById('mcp-add-cancel').addEventListener('click', () => {
   document.getElementById('mcp-add-form').style.display = 'none';
   mcpEnvRows = [];
+  mcpHeaderRows = [];
   renderMcpEnvRows();
+  renderMcpHeaderRows();
 });
 document.getElementById('mcp-add-confirm').addEventListener('click', () => {
   const name = document.getElementById('mcp-name').value.trim();
-  const cmd = document.getElementById('mcp-cmd').value.trim();
-  const args = document.getElementById('mcp-args').value.trim().split(/\s+/).filter(Boolean);
-  if (!name || !cmd) return;
-  const env = mcpEnvRows.length ? Object.fromEntries(mcpEnvRows.map(r => [r.k, r.v])) : undefined;
-  const updated = { ...(state.project?.mcpServers ?? {}), [name]: { command: cmd, args, ...(env ? { env } : {}) } };
+  const type = document.getElementById('mcp-type').value;
+  const isHttp = ['sse', 'http'].includes(type);
+  if (!name) return;
+
+  let server = { type };
+  if (isHttp) {
+    const url = document.getElementById('mcp-url').value.trim();
+    if (!url) return;
+    server.url = url;
+    if (mcpHeaderRows.length) server.headers = Object.fromEntries(mcpHeaderRows.map(r => [r.k, r.v]));
+  } else {
+    const cmd = document.getElementById('mcp-cmd').value.trim();
+    if (!cmd) return;
+    const args = document.getElementById('mcp-args').value.trim().split(/\s+/).filter(Boolean);
+    server.command = cmd;
+    server.args = args;
+  }
+  if (mcpEnvRows.length) server.env = Object.fromEntries(mcpEnvRows.map(r => [r.k, r.v]));
+
+  const updated = { ...(state.project?.mcpServers ?? {}), [name]: server };
   vscode.postMessage({ type: 'saveMcp', servers: updated });
   document.getElementById('mcp-add-form').style.display = 'none';
   document.getElementById('mcp-name').value = '';
+  document.getElementById('mcp-type').value = 'stdio';
   document.getElementById('mcp-cmd').value = '';
   document.getElementById('mcp-args').value = '';
+  document.getElementById('mcp-url').value = '';
+  document.getElementById('mcp-cmd-field').style.display = '';
+  document.getElementById('mcp-args-field').style.display = '';
+  document.getElementById('mcp-url-field').style.display = 'none';
+  document.getElementById('mcp-headers-field').style.display = 'none';
   mcpEnvRows = [];
+  mcpHeaderRows = [];
   renderMcpEnvRows();
+  renderMcpHeaderRows();
 });
 
 // --- Permissions ---
@@ -349,6 +496,7 @@ function renderPermissions() {
   const perms = cfg.settings?.permissions ?? { allow: [], deny: [] };
   document.getElementById('permissions-default-mode').value = perms.defaultMode ?? '';
   renderTags('allow-tags', perms.allow ?? [], 'allow');
+  renderTags('ask-tags', perms.ask ?? [], 'ask');
   renderTags('deny-tags', perms.deny ?? [], 'deny');
 }
 
@@ -365,6 +513,7 @@ function renderTags(containerId, items, type) {
     btn.addEventListener('click', () => {
       const cfg = getConfig();
       const perms = JSON.parse(JSON.stringify(cfg.settings?.permissions ?? { allow: [], deny: [] }));
+      if (!perms[btn.dataset.type]) perms[btn.dataset.type] = [];
       perms[btn.dataset.type].splice(Number(btn.dataset.i), 1);
       if (currentScope === 'project') state.project.settings.permissions = perms;
       else state.global.settings.permissions = perms;
@@ -379,6 +528,7 @@ function addPermission(type) {
   if (!val) return;
   const cfg = getConfig();
   const perms = JSON.parse(JSON.stringify(cfg.settings?.permissions ?? { allow: [], deny: [] }));
+  if (!perms[type]) perms[type] = [];
   if (!perms[type].includes(val)) perms[type].push(val);
   if (currentScope === 'project') state.project.settings.permissions = perms;
   else state.global.settings.permissions = perms;
@@ -387,12 +537,14 @@ function addPermission(type) {
 }
 
 document.getElementById('allow-add').addEventListener('click', () => addPermission('allow'));
+document.getElementById('ask-add').addEventListener('click', () => addPermission('ask'));
 document.getElementById('deny-add').addEventListener('click', () => addPermission('deny'));
 document.getElementById('allow-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPermission('allow'); });
+document.getElementById('ask-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPermission('ask'); });
 document.getElementById('deny-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPermission('deny'); });
 document.getElementById('save-permissions').addEventListener('click', () => {
   const cfg = getConfig();
-  const perms = { ...(cfg.settings?.permissions ?? { allow: [], deny: [] }) };
+  const perms = JSON.parse(JSON.stringify(cfg.settings?.permissions ?? { allow: [], deny: [] }));
   const mode = document.getElementById('permissions-default-mode').value;
   if (mode) perms.defaultMode = mode;
   else delete perms.defaultMode;
@@ -400,25 +552,42 @@ document.getElementById('save-permissions').addEventListener('click', () => {
 });
 
 // --- Hooks ---
+const ALL_HOOK_EVENTS = [
+  'PreToolUse','PostToolUse','PostToolUseFailure','Stop','StopFailure','Notification',
+  'SessionStart','SessionEnd','UserPromptSubmit','PermissionRequest','PermissionDenied',
+  'SubagentStart','SubagentStop','TaskCreated','TaskCompleted','TeammateIdle',
+  'InstructionsLoaded','ConfigChange','CwdChanged','FileChanged',
+  'WorktreeCreate','WorktreeRemove','PreCompact','PostCompact','Elicitation','ElicitationResult',
+];
+
+function hookValue(h) {
+  if (h.type === 'command') return h.command ?? '';
+  if (h.type === 'http') return h.url ?? '';
+  if (h.type === 'prompt') return h.prompt ?? '';
+  if (h.type === 'agent') return h.agent ?? '';
+  return h.command ?? '';
+}
+
 function renderHooks() {
   const cfg = getConfig();
   const hooks = cfg?.settings?.hooks ?? {};
   const container = document.getElementById('hooks-list');
   container.innerHTML = '';
 
-  const events = ['PreToolUse', 'PostToolUse', 'Stop', 'Notification'];
   let any = false;
-  for (const event of events) {
+  for (const event of ALL_HOOK_EVENTS) {
     const entries = hooks[event] ?? [];
     entries.forEach((entry, ei) => {
-      any = true;
       entry.hooks.forEach((h, hi) => {
+        any = true;
         const div = document.createElement('div');
         div.className = 'hook-item';
+        const typeLabel = h.type ?? 'command';
         div.innerHTML = `
           <div class="hook-event">${event}</div>
           ${entry.matcher ? `<div class="hook-matcher">matcher: ${esc(entry.matcher)}</div>` : ''}
-          <div class="hook-command">${esc(h.command)}</div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;opacity:0.5;margin-bottom:2px">${typeLabel}</div>
+          <div class="hook-command">${esc(hookValue(h))}</div>
           <div class="hook-actions">
             <button class="icon-btn danger delete-hook" data-event="${event}" data-ei="${ei}" data-hi="${hi}">Delete</button>
           </div>
@@ -447,6 +616,15 @@ function renderHooks() {
   });
 }
 
+// Hook type conditional fields
+document.getElementById('hook-type').addEventListener('change', () => {
+  const t = document.getElementById('hook-type').value;
+  document.getElementById('hook-command-field').style.display = t === 'command' ? '' : 'none';
+  document.getElementById('hook-url-field').style.display = t === 'http' ? '' : 'none';
+  document.getElementById('hook-prompt-field').style.display = t === 'prompt' ? '' : 'none';
+  document.getElementById('hook-agent-field').style.display = t === 'agent' ? '' : 'none';
+});
+
 document.getElementById('add-hook-btn').addEventListener('click', () => {
   document.getElementById('hook-add-form').style.display = 'block';
 });
@@ -456,18 +634,45 @@ document.getElementById('hook-add-cancel').addEventListener('click', () => {
 document.getElementById('hook-add-confirm').addEventListener('click', () => {
   const event = document.getElementById('hook-event').value;
   const matcher = document.getElementById('hook-matcher').value.trim();
-  const command = document.getElementById('hook-command').value.trim();
-  if (!command) return;
+  const hookType = document.getElementById('hook-type').value;
+  let hookObj = { type: hookType };
+
+  if (hookType === 'command') {
+    const cmd = document.getElementById('hook-command').value.trim();
+    if (!cmd) return;
+    hookObj.command = cmd;
+  } else if (hookType === 'http') {
+    const url = document.getElementById('hook-url').value.trim();
+    if (!url) return;
+    hookObj.url = url;
+  } else if (hookType === 'prompt') {
+    const prompt = document.getElementById('hook-prompt').value.trim();
+    if (!prompt) return;
+    hookObj.prompt = prompt;
+  } else if (hookType === 'agent') {
+    const agent = document.getElementById('hook-agent').value.trim();
+    if (!agent) return;
+    hookObj.agent = agent;
+  }
+
   const cfg = getConfig();
   const hooks = JSON.parse(JSON.stringify(cfg.settings?.hooks ?? {}));
   if (!hooks[event]) hooks[event] = [];
-  hooks[event].push({ matcher: matcher || undefined, hooks: [{ type: 'command', command }] });
+  hooks[event].push({ matcher: matcher || undefined, hooks: [hookObj] });
   if (currentScope === 'project') state.project.settings.hooks = hooks;
   else state.global.settings.hooks = hooks;
   renderHooks();
   document.getElementById('hook-add-form').style.display = 'none';
   document.getElementById('hook-matcher').value = '';
   document.getElementById('hook-command').value = '';
+  document.getElementById('hook-url').value = '';
+  document.getElementById('hook-prompt').value = '';
+  document.getElementById('hook-agent').value = '';
+  document.getElementById('hook-type').value = 'command';
+  document.getElementById('hook-command-field').style.display = '';
+  document.getElementById('hook-url-field').style.display = 'none';
+  document.getElementById('hook-prompt-field').style.display = 'none';
+  document.getElementById('hook-agent-field').style.display = 'none';
 });
 document.getElementById('save-hooks').addEventListener('click', () => {
   const cfg = getConfig();
@@ -528,7 +733,7 @@ document.getElementById('save-memory-md').addEventListener('click', () => {
   vscode.postMessage({ type: 'saveMemoryMd', content: document.getElementById('memory-md-editor').value });
 });
 
-// --- File Sections ---
+// --- File Sections (rules, commands, skills, workflows, agents) ---
 function renderFileSection(type) {
   const cfg = currentScope === 'project' ? state.project : state.global;
   const files = (cfg ?? {})[type] ?? [];
@@ -566,6 +771,91 @@ document.querySelectorAll('.add-file-btn').forEach(btn => {
   });
 });
 
+// --- Sandbox ---
+function renderSandbox() {
+  const cfg = getConfig();
+  if (!cfg) return;
+  const sb = cfg.settings?.sandbox ?? {};
+  document.getElementById('sandbox-enabled').checked = sb.enabled ?? false;
+  document.getElementById('sandbox-allow-local-binding').checked = sb.network?.allowLocalBinding ?? false;
+
+  sandboxTags.excluded = [...(sb.excludedCommands ?? [])];
+  sandboxTags.allowWrite = [...(sb.filesystem?.allowWrite ?? [])];
+  sandboxTags.denyWrite = [...(sb.filesystem?.denyWrite ?? [])];
+  sandboxTags.allowRead = [...(sb.filesystem?.allowRead ?? [])];
+  sandboxTags.denyRead = [...(sb.filesystem?.denyRead ?? [])];
+  sandboxTags.allowedDomains = [...(sb.network?.allowedDomains ?? [])];
+  sandboxTags.deniedDomains = [...(sb.network?.deniedDomains ?? [])];
+
+  renderTagList('sandbox-excluded-tags', sandboxTags.excluded, renderSandbox);
+  renderTagList('sandbox-allow-write-tags', sandboxTags.allowWrite, renderSandbox);
+  renderTagList('sandbox-deny-write-tags', sandboxTags.denyWrite, renderSandbox);
+  renderTagList('sandbox-allow-read-tags', sandboxTags.allowRead, renderSandbox);
+  renderTagList('sandbox-deny-read-tags', sandboxTags.denyRead, renderSandbox);
+  renderTagList('sandbox-allowed-domains-tags', sandboxTags.allowedDomains, renderSandbox);
+  renderTagList('sandbox-denied-domains-tags', sandboxTags.deniedDomains, renderSandbox);
+}
+
+function sandboxAddBtn(inputId, arrKey) {
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (!val) return;
+  sandboxTags[arrKey].push(val);
+  input.value = '';
+  renderTagList(`sandbox-${inputId.replace('sandbox-','').replace('-input','')}-tags`, sandboxTags[arrKey], renderSandbox);
+}
+
+document.getElementById('sandbox-excluded-add').addEventListener('click', () => sandboxAddBtn('sandbox-excluded-input', 'excluded'));
+document.getElementById('sandbox-allow-write-add').addEventListener('click', () => sandboxAddBtn('sandbox-allow-write-input', 'allowWrite'));
+document.getElementById('sandbox-deny-write-add').addEventListener('click', () => sandboxAddBtn('sandbox-deny-write-input', 'denyWrite'));
+document.getElementById('sandbox-allow-read-add').addEventListener('click', () => sandboxAddBtn('sandbox-allow-read-input', 'allowRead'));
+document.getElementById('sandbox-deny-read-add').addEventListener('click', () => sandboxAddBtn('sandbox-deny-read-input', 'denyRead'));
+document.getElementById('sandbox-allowed-domains-add').addEventListener('click', () => sandboxAddBtn('sandbox-allowed-domains-input', 'allowedDomains'));
+document.getElementById('sandbox-denied-domains-add').addEventListener('click', () => sandboxAddBtn('sandbox-denied-domains-input', 'deniedDomains'));
+
+document.getElementById('save-sandbox').addEventListener('click', () => {
+  const sandbox = {
+    enabled: document.getElementById('sandbox-enabled').checked,
+    excludedCommands: sandboxTags.excluded.length ? sandboxTags.excluded : undefined,
+    filesystem: (sandboxTags.allowWrite.length || sandboxTags.denyWrite.length || sandboxTags.allowRead.length || sandboxTags.denyRead.length) ? {
+      allowWrite: sandboxTags.allowWrite.length ? sandboxTags.allowWrite : undefined,
+      denyWrite: sandboxTags.denyWrite.length ? sandboxTags.denyWrite : undefined,
+      allowRead: sandboxTags.allowRead.length ? sandboxTags.allowRead : undefined,
+      denyRead: sandboxTags.denyRead.length ? sandboxTags.denyRead : undefined,
+    } : undefined,
+    network: (sandboxTags.allowedDomains.length || sandboxTags.deniedDomains.length || document.getElementById('sandbox-allow-local-binding').checked) ? {
+      allowedDomains: sandboxTags.allowedDomains.length ? sandboxTags.allowedDomains : undefined,
+      deniedDomains: sandboxTags.deniedDomains.length ? sandboxTags.deniedDomains : undefined,
+      allowLocalBinding: document.getElementById('sandbox-allow-local-binding').checked || undefined,
+    } : undefined,
+  };
+  vscode.postMessage({ type: 'saveSandbox', scope: currentScope, sandbox });
+});
+
+// --- App Config ---
+function renderAppConfig() {
+  const cfg = state.globalUserConfig ?? {};
+  document.getElementById('appconfig-editor-mode').value = cfg.editorMode ?? '';
+  document.getElementById('appconfig-auto-scroll').checked = cfg.autoScrollEnabled ?? false;
+  document.getElementById('appconfig-show-turn-duration').checked = cfg.showTurnDuration ?? false;
+  document.getElementById('appconfig-terminal-progress').checked = cfg.terminalProgressBarEnabled ?? false;
+  document.getElementById('appconfig-auto-connect-ide').checked = cfg.autoConnectIde ?? false;
+  document.getElementById('appconfig-auto-install-ext').checked = cfg.autoInstallIdeExtension ?? false;
+}
+
+document.getElementById('save-appconfig').addEventListener('click', () => {
+  const editorMode = document.getElementById('appconfig-editor-mode').value;
+  const config = {
+    editorMode: editorMode || undefined,
+    autoScrollEnabled: document.getElementById('appconfig-auto-scroll').checked,
+    showTurnDuration: document.getElementById('appconfig-show-turn-duration').checked,
+    terminalProgressBarEnabled: document.getElementById('appconfig-terminal-progress').checked,
+    autoConnectIde: document.getElementById('appconfig-auto-connect-ide').checked,
+    autoInstallIdeExtension: document.getElementById('appconfig-auto-install-ext').checked,
+  };
+  vscode.postMessage({ type: 'saveGlobalUserConfig', config });
+});
+
 // --- Init ---
 function updateInitNav() {
   const navInit = document.getElementById('nav-init');
@@ -582,11 +872,8 @@ function updateInitNav() {
 function renderInit() {
   const initialized = state.isProjectInitialized;
   document.getElementById('init-already').style.display = initialized ? 'flex' : 'none';
-
-  // pre-fill CLAUDE.md template only if empty
   const editor = document.getElementById('init-claudemd');
   if (!editor.value) {
-    const projectName = (state.project?.claudeMd ? '' : '');
     editor.value = `# Project\n\n## Overview\nDescribe your project here.\n\n## Development\n- Add key commands and workflows here.\n\n## Guidelines\n- Add project-specific coding standards here.\n`;
   }
 }
