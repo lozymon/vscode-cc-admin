@@ -1,50 +1,82 @@
 # Claude Code Admin
 
-A VSCode extension that provides a GUI admin panel for managing all Claude Code configuration — no more hand-editing JSON or markdown files.
+A VSCode extension that provides a modern GUI admin panel for managing all Claude Code configuration — no more hand-editing JSON or markdown files.
 
 ## Features
 
-- **Model** — Switch models (Opus, Sonnet, Haiku) from a dropdown
-- **MCP Servers** — Add, remove, and toggle MCP servers with an enable/disable switch
-- **Permissions** — Manage allow/deny lists with a tag-style editor
-- **Hooks** — View, add, and delete hooks grouped by event type (PreToolUse, PostToolUse, Stop, Notification)
-- **CLAUDE.md** — Edit your project's main Claude instructions directly
-- **Rules / Commands / Skills / Workflows** — Browse, create, and delete `.md` files in each category
-- **Project + Global scope** — Clear separation between `.claude/` (project) and `~/.claude/` (global) config
+### Dashboard
+A live overview of your Claude Code setup: model, MCP server count, permissions, hooks, env vars, memory files, and project file counts. Click any card to jump to that section.
 
-## Usage
+### Model
+- Switch primary model (Opus 4.7, Sonnet 4.6, Haiku 4.5)
+- Set a separate small/background model for lightweight tasks
 
-1. Open any project in VSCode
-2. Click the **Claude Code** icon in the Activity Bar (left sidebar)
-3. Browse your config in the tree panel
-4. Click any section to open the admin panel
+### Environment Variables
+- Manage `env` key/value pairs passed to Claude on every run
+- Works at both project and global scope
+
+### Advanced
+- Override or append to the system prompt
+- Set bash command timeout and max thinking tokens
+
+### MCP Servers
+- Add, remove, and enable/disable MCP servers
+- Per-server environment variables supported in the add form
+
+### Permissions
+- Tag-style editor for `allow` and `deny` lists
+- Works at both project and global scope
+
+### Hooks
+- View, add, and delete hooks by event type (PreToolUse, PostToolUse, Stop, Notification)
+- Matcher (regex) support
+
+### CLAUDE.md
+- Full editor for your project's main Claude instructions
+
+### .claudeignore
+- Editor for the project-level ignore file (like `.gitignore` for Claude's context)
+
+### Rules / Commands / Skills / Workflows
+- Browse, open, and delete `.md` files in each category
+- Create new files with a name prompt — opens in the editor automatically
+
+### Memory
+- Edit `~/.claude/MEMORY.md` directly
+- Browse all `~/.claude/memory/*.md` files and open them in the editor
+
+## Opening the Panel
+
+- **Status bar** — click `⚙ Claude Code` in the bottom-right corner
+- **Keyboard shortcut** — `Ctrl+Shift+Alt+C` (Mac: `Cmd+Shift+Alt+C`)
 
 ## Config Files Managed
 
-| File                          | Scope                               |
-| ----------------------------- | ----------------------------------- |
-| `.claude/settings.json`       | Project — permissions, hooks, model |
-| `.claude/settings.local.json` | Project local — MCP toggles         |
-| `.claude/.mcp.json`           | Project — MCP server definitions    |
-| `CLAUDE.md`                   | Project — main instructions         |
-| `.claude/rules/*.md`          | Project — coding standards          |
-| `.claude/commands/*.md`       | Project — slash commands            |
-| `.claude/skills/*.md`         | Project — reusable tasks            |
-| `.claude/workflows/*.md`      | Project — multi-step workflows      |
-| `~/.claude/settings.json`     | Global — permissions, hooks         |
-| `~/.claude/commands/*.md`     | Global — slash commands             |
+| File                            | Scope                                          |
+| ------------------------------- | ---------------------------------------------- |
+| `.claude/settings.json`         | Project — model, env, prompts, permissions, hooks |
+| `.claude/settings.local.json`   | Project local — MCP toggles                    |
+| `.claude/.mcp.json`             | Project — MCP server definitions               |
+| `CLAUDE.md`                     | Project — main instructions                    |
+| `.claudeignore`                 | Project — paths to exclude from context        |
+| `.claude/rules/*.md`            | Project — coding standards                     |
+| `.claude/commands/*.md`         | Project — slash commands                       |
+| `.claude/skills/*.md`           | Project — reusable tasks                       |
+| `.claude/workflows/*.md`        | Project — multi-step workflows                 |
+| `~/.claude/settings.json`       | Global — model, env, permissions, hooks        |
+| `~/.claude/commands/*.md`       | Global — slash commands                        |
+| `~/.claude/rules/*.md`          | Global — coding standards                      |
+| `~/.claude/skills/*.md`         | Global — skills                                |
+| `~/.claude/workflows/*.md`      | Global — workflows                             |
+| `~/.claude/MEMORY.md`           | Global — memory index                          |
+| `~/.claude/memory/*.md`         | Global — individual memory files               |
 
 ## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Build
-npm run build
-
-# Watch mode
-npm run watch
+npm run build    # one-off build
+npm run watch    # rebuild on change
 ```
 
 Press **F5** in VSCode to launch the Extension Development Host.
@@ -53,16 +85,14 @@ Press **F5** in VSCode to launch the Extension Development Host.
 
 ```
 src/
-├── extension.ts              # Activation entry point
+├── extension.ts           # Activation, status bar, commands
 ├── config/
-│   ├── ConfigManager.ts      # Read/write all config files + file watchers
-│   ├── paths.ts              # Resolve project and global .claude/ paths
-│   └── schema.ts             # TypeScript types
-├── tree/
-│   └── ClaudeTreeProvider.ts # Sidebar tree (PROJECT / GLOBAL)
+│   ├── ConfigManager.ts   # Read/write all config files + file watchers
+│   ├── paths.ts           # Resolve project and global .claude/ paths
+│   └── schema.ts          # TypeScript interfaces
 └── webview/
-    ├── WebviewPanel.ts        # Webview lifecycle + message handling
+    ├── WebviewPanel.ts    # Webview lifecycle + message handling
     └── ui/
-        ├── index.html         # Panel layout
-        └── main.js            # Frontend logic
+        ├── index.html     # Layout and styles
+        └── main.js        # Frontend render + save logic
 ```
