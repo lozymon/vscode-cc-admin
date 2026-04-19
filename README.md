@@ -13,20 +13,29 @@ A live overview of your Claude Code setup: model, MCP server count, permissions,
 ### Model
 - Switch primary model (Opus 4.7, Sonnet 4.6, Haiku 4.5)
 - Set a separate small/background model for lightweight tasks
+- **Effort level** — `low`, `medium`, `high`, `xhigh`, `max` (persisted via `effortLevel`)
+- **Extended Thinking** toggle — enables `alwaysThinkingEnabled` across all sessions
+- **Show Thinking Summaries** toggle — display Claude's reasoning summaries
 
 ### Environment Variables
 - Manage `env` key/value pairs passed to Claude on every run
 - Works at both project and global scope
 
 ### Advanced
-- Override or append to the system prompt
-- Set bash command timeout and max thinking tokens
+- Override or append to the system prompt (`systemPrompt`, `appendSystemPrompt`)
+- Set bash command timeout (`bashTimeout`) and max thinking tokens (`maxThinkingTokens`)
+- **View Mode** — default transcript view (`default`, `verbose`, `focus`)
+- **Response Language** — set Claude's preferred response language
+- **Session Cleanup Period** — how many days to keep session files (`cleanupPeriodDays`)
+- **Include Git Instructions** — toggle built-in git workflow guidance
+- **Respect .gitignore** — control whether `@` file picker honours `.gitignore`
 
 ### MCP Servers
 - Add, remove, and enable/disable MCP servers
 - Per-server environment variables supported in the add form
 
 ### Permissions
+- **Default Mode** — set the permission mode (`default`, `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`)
 - Tag-style editor for `allow` and `deny` lists
 - Works at both project and global scope
 
