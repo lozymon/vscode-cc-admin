@@ -1,7 +1,7 @@
 {
-  "name": "vscode-claude-admin",
-  "displayName": "Claude Code Admin",
-  "description": "GUI admin panel for Claude Code configuration",
+  "name": "vscode-cc-admin",
+  "displayName": "CC Admin",
+  "description": "Admin dashboard for Claude Code configuration",
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.85.0"
