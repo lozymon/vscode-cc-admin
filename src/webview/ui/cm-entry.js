@@ -1,7 +1,7 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { search, searchKeymap, openSearchPanel, closeSearchPanel, findNext, findPrevious, replaceNext, replaceAll, selectMatches, SearchQuery, setSearchQuery } from '@codemirror/search';
+import { search, searchKeymap, openSearchPanel, closeSearchPanel, findNext, findPrevious, replaceNext, replaceAll, selectMatches, SearchQuery, SearchCursor, RegExpCursor, setSearchQuery, getSearchQuery } from '@codemirror/search';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting, HighlightStyle, indentOnInput } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
@@ -19,6 +19,7 @@ function vscodeDarkTheme() {
       fontFamily: 'var(--vscode-editor-font-family, monospace)',
       background: 'var(--vscode-input-background)',
       color: 'var(--vscode-editor-foreground)',
+      position: 'relative',
     },
     '.cm-content': { caretColor: 'var(--vscode-editor-foreground)', padding: '8px 0' },
     '.cm-cursor': { borderLeftColor: 'var(--vscode-editor-foreground)' },
@@ -35,7 +36,8 @@ function vscodeDarkTheme() {
     '.cm-selectionBackground, ::selection': { backgroundColor: 'var(--vscode-editor-selectionBackground, #264f78) !important' },
     '.cm-searchMatch': { backgroundColor: 'rgba(255,200,0,0.25)', outline: '1px solid rgba(255,200,0,0.5)' },
     '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: 'rgba(255,200,0,0.5)' },
-    '.cm-panels': { background: 'var(--vscode-sideBar-background)', borderTop: '1px solid var(--border)', padding: '8px 10px' },
+    '.cm-panels': { background: 'transparent', border: 'none', padding: '0' },
+    '.cm-panels.cm-panels-top': { position: 'absolute', top: '10px', right: '12px', left: 'auto', width: '400px', zIndex: '100', borderRadius: '6px', boxShadow: '0 6px 24px rgba(0,0,0,0.45)', border: '1px solid var(--border)', overflow: 'hidden' },
     '.cm-search': { display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' },
     '.cm-search br': { display: 'none' },
     '.cm-textfield': { background: 'var(--vscode-input-background) !important', color: 'var(--vscode-editor-foreground) !important', border: '1px solid var(--vscode-input-border) !important', borderRadius: '3px !important', padding: '4px 8px !important', fontSize: '12px !important', width: '180px !important' },
@@ -111,15 +113,16 @@ function createVSCodeSearchPanel(view) {
       <div class="vsc-input-wrap">
         <input class="vsc-input" placeholder="Find" autocomplete="off" spellcheck="false">
         <div class="vsc-input-opts">
-          <button class="vsc-opt" data-opt="case" title="Match Case (Alt+C)">Aa</button>
-          <button class="vsc-opt" data-opt="word" title="Whole Word (Alt+W)"><u>ab</u></button>
-          <button class="vsc-opt" data-opt="regexp" title="Use Regex (Alt+R)" style="font-family:monospace">.*</button>
+          <button class="vsc-opt" data-opt="case"   title="Match Case (Alt+C)">Aa</button>
+          <button class="vsc-opt" data-opt="word"   title="Whole Word (Alt+W)" style="text-decoration:underline;text-underline-offset:3px">ab</button>
+          <button class="vsc-opt" data-opt="regexp" title="Use Regex (Alt+R)" style="font-family:monospace;letter-spacing:-1px">.*</button>
         </div>
+        <span class="vsc-match-count"></span>
       </div>
       <div class="vsc-actions">
         <button class="vsc-action" data-action="prev" title="Previous Match (Shift+Enter)">↑</button>
         <button class="vsc-action" data-action="next" title="Next Match (Enter)">↓</button>
-        <button class="vsc-action" data-action="all"  title="Select All Matches">⊡</button>
+        <button class="vsc-action" data-action="all"  title="Select All Matches">≡</button>
         <div class="vsc-sep"></div>
         <button class="vsc-action vsc-close" data-action="close" title="Close (Escape)">✕</button>
       </div>
@@ -129,13 +132,14 @@ function createVSCodeSearchPanel(view) {
         <input class="vsc-input" placeholder="Replace" autocomplete="off" spellcheck="false">
       </div>
       <div class="vsc-actions">
-        <button class="vsc-action" data-action="replace"    title="Replace (Enter)">Replace</button>
-        <button class="vsc-action" data-action="replaceAll" title="Replace All">Replace All</button>
+        <button class="vsc-action" data-action="replace"    title="Replace (Enter)"  style="font-size:11px">Replace</button>
+        <button class="vsc-action" data-action="replaceAll" title="Replace All"      style="font-size:11px">All</button>
       </div>
     </div>
   `;
 
   const [findInput, replaceInput] = dom.querySelectorAll('.vsc-input');
+  const matchCountEl = dom.querySelector('.vsc-match-count');
 
   function commit() {
     try {
@@ -145,6 +149,19 @@ function createVSCodeSearchPanel(view) {
         caseSensitive, regexp, wholeWord,
       })) });
     } catch(_) {}
+  }
+
+  function countMatches(state) {
+    const q = getSearchQuery(state);
+    if (!q.search) return null;
+    let count = 0;
+    try {
+      const cursor = q.regexp
+        ? new RegExpCursor(state.doc, q.search, { ignoreCase: !q.caseSensitive })
+        : new SearchCursor(state.doc, q.search, 0, state.doc.length, q.caseSensitive ? undefined : s => s.toLowerCase());
+      while (!cursor.next().done) count++;
+    } catch(_) { return null; }
+    return count;
   }
 
   findInput.addEventListener('input', commit);
@@ -186,8 +203,50 @@ function createVSCodeSearchPanel(view) {
 
   return {
     dom,
-    mount() { findInput.focus(); },
-    update() {},
+    mount() {
+      const wrap = dom.closest('.cm-panels');
+      if (wrap) {
+        Object.assign(wrap.style, {
+          position: 'absolute',
+          top: '10px',
+          right: '12px',
+          left: 'auto',
+          bottom: 'auto',
+          width: '400px',
+          zIndex: '100',
+          borderRadius: '6px',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.5)',
+          border: '1px solid var(--vscode-panel-border, rgba(255,255,255,0.12))',
+          overflow: 'hidden',
+          background: 'none',
+          padding: '0',
+        });
+      }
+      findInput.focus();
+    },
+    update(update) {
+      if (!update.docChanged && !update.selectionSet && !update.transactions.some(tr => tr.effects.length)) return;
+      const q = getSearchQuery(update.state);
+      if (!q.search) { matchCountEl.textContent = ''; return; }
+      const total = countMatches(update.state);
+      if (total === null) { matchCountEl.textContent = ''; return; }
+      if (total === 0) { matchCountEl.textContent = 'No results'; matchCountEl.style.color = 'var(--vscode-errorForeground, #f88)'; return; }
+      matchCountEl.style.color = '';
+      // find which match is selected (cursor position)
+      const sel = update.state.selection.main.from;
+      let idx = 0;
+      try {
+        const cursor = q.regexp
+          ? new RegExpCursor(update.state.doc, q.search, { ignoreCase: !q.caseSensitive })
+          : new SearchCursor(update.state.doc, q.search, 0, update.state.doc.length, q.caseSensitive ? undefined : s => s.toLowerCase());
+        let i = 0;
+        while (!cursor.next().done) {
+          i++;
+          if (cursor.value.from <= sel && sel <= cursor.value.to) { idx = i; break; }
+        }
+      } catch(_) {}
+      matchCountEl.textContent = idx ? `${idx} of ${total}` : `${total} matches`;
+    },
   };
 }
 
@@ -295,7 +354,7 @@ export function createMarkdownEditor(container, initialDoc, { onChange, height =
         drawSelection(),
         history(),
         indentOnInput(),
-        search({ top: false, createPanel: createVSCodeSearchPanel }),
+        search({ top: true, createPanel: createVSCodeSearchPanel }),
         syntaxHighlighting(markdownHighlight, { fallback: true }),
         markdown({ base: markdownLanguage }),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
