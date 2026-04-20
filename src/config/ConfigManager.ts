@@ -92,6 +92,21 @@ export class ConfigManager {
       });
   }
 
+  private readSkillFiles(dir: string): MarkdownFile[] {
+    if (!fs.existsSync(dir)) return [];
+    const results: MarkdownFile[] = [];
+    for (const entry of fs.readdirSync(dir)) {
+      const entryPath = path.join(dir, entry);
+      if (!fs.statSync(entryPath).isDirectory()) continue;
+      const skillFile = path.join(entryPath, 'SKILL.md');
+      if (!fs.existsSync(skillFile)) continue;
+      const lines = fs.readFileSync(skillFile, 'utf8').split('\n');
+      const firstLine = lines.find((l) => l.trim()) ?? '';
+      results.push({ name: entry, firstLine, filePath: skillFile });
+    }
+    return results;
+  }
+
   private readMemoryFiles(dir: string): MemoryFile[] {
     if (!fs.existsSync(dir)) return [];
     return fs
@@ -125,7 +140,7 @@ export class ConfigManager {
       claudeIgnore: this.readText(p.claudeIgnore),
       rules: this.readMarkdownFiles(p.rules),
       commands: this.readMarkdownFiles(p.commands),
-      skills: this.readMarkdownFiles(p.skills),
+      skills: this.readSkillFiles(p.skills),
       workflows: this.readMarkdownFiles(p.workflows),
       agents: this.readMarkdownFiles(p.agents),
     };
@@ -140,7 +155,7 @@ export class ConfigManager {
       settings,
       commands: this.readMarkdownFiles(g.commands),
       rules: this.readMarkdownFiles(g.rules),
-      skills: this.readMarkdownFiles(g.skills),
+      skills: this.readSkillFiles(g.skills),
       workflows: this.readMarkdownFiles(g.workflows),
       agents: this.readMarkdownFiles(g.agents),
       memoryMd: this.readText(g.memoryMd),
@@ -164,7 +179,7 @@ export class ConfigManager {
       '**/.claudeignore',
       '**/.claude/rules/*.md',
       '**/.claude/commands/*.md',
-      '**/.claude/skills/*.md',
+      '**/.claude/skills/**/*.md',
       '**/.claude/workflows/*.md',
       '**/.claude/agents/*.md',
     ];
@@ -310,8 +325,15 @@ export class ConfigManager {
       dir = (p as any)[sectionType];
     }
     if (!dir) return;
-    fs.mkdirSync(dir, { recursive: true });
-    const filePath = path.join(dir, `${name}.md`);
+    let filePath: string;
+    if (sectionType === 'skills') {
+      const skillDir = path.join(dir, name);
+      fs.mkdirSync(skillDir, { recursive: true });
+      filePath = path.join(skillDir, 'SKILL.md');
+    } else {
+      fs.mkdirSync(dir, { recursive: true });
+      filePath = path.join(dir, `${name}.md`);
+    }
     fs.writeFileSync(filePath, `# ${name}\n`, 'utf8');
     await vscode.window.showTextDocument(vscode.Uri.file(filePath));
     this.reload();
@@ -319,7 +341,11 @@ export class ConfigManager {
   }
 
   async deleteMarkdownFile(filePath: string) {
-    fs.rmSync(filePath);
+    if (path.basename(filePath) === 'SKILL.md') {
+      fs.rmSync(path.dirname(filePath), { recursive: true });
+    } else {
+      fs.rmSync(filePath);
+    }
     this.reload();
     this._onDidChange.fire();
   }

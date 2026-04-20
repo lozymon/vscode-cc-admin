@@ -489,6 +489,8 @@ document.getElementById('mcp-add-confirm').addEventListener('click', () => {
     if (!url) return;
     server.url = url;
     if (mcpHeaderRows.length) server.headers = Object.fromEntries(mcpHeaderRows.map(r => [r.k, r.v]));
+    const headersHelper = document.getElementById('mcp-headers-helper').value.trim();
+    if (headersHelper) server.headersHelper = headersHelper;
   } else {
     const cmd = document.getElementById('mcp-cmd').value.trim();
     if (!cmd) return;
@@ -510,6 +512,7 @@ document.getElementById('mcp-add-confirm').addEventListener('click', () => {
   document.getElementById('mcp-args-field').style.display = '';
   document.getElementById('mcp-url-field').style.display = 'none';
   document.getElementById('mcp-headers-field').style.display = 'none';
+  document.getElementById('mcp-headers-helper').value = '';
   mcpEnvRows = [];
   mcpHeaderRows = [];
   renderMcpEnvRows();
@@ -761,6 +764,31 @@ function exportSettingsJson() {
 document.getElementById('export-settings-btn').addEventListener('click', exportSettingsJson);
 document.getElementById('export-advanced-btn').addEventListener('click', exportSettingsJson);
 
+// --- Import ---
+function openImportModal() {
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-error').textContent = '';
+  document.getElementById('import-overlay').classList.add('open');
+  document.getElementById('import-textarea').focus();
+}
+function closeImportModal() {
+  document.getElementById('import-overlay').classList.remove('open');
+}
+document.getElementById('import-advanced-btn').addEventListener('click', openImportModal);
+document.getElementById('import-settings-btn').addEventListener('click', openImportModal);
+document.getElementById('import-cancel').addEventListener('click', closeImportModal);
+document.getElementById('import-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeImportModal(); });
+document.getElementById('import-apply').addEventListener('click', () => {
+  const raw = document.getElementById('import-textarea').value.trim();
+  try {
+    const settings = JSON.parse(raw);
+    vscode.postMessage({ type: 'importSettings', scope: currentScope, settings });
+    closeImportModal();
+  } catch(e) {
+    document.getElementById('import-error').textContent = 'Invalid JSON: ' + e.message;
+  }
+});
+
 // --- CLAUDE.md ---
 function renderClaudeMd() {
   const content = state.project?.claudeMd ?? '';
@@ -921,6 +949,7 @@ function openInlineEditor(type, filePath, name, content) {
   const ed = CM.createMarkdownEditor(edContainer, editorContent, {
     onChange: () => saveBtn.classList.add('dirty'),
     height: '380px',
+    mode: type === 'commands' ? 'commands' : undefined,
   });
   inlineEditors[type].ed = ed;
 }

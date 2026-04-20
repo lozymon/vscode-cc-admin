@@ -55,6 +55,7 @@ export interface McpServer {
   env?: Record<string, string>;
   url?: string;
   headers?: Record<string, string>;
+  headersHelper?: string;
 }
 
 export interface McpJson {

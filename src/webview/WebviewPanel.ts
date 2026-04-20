@@ -125,6 +125,9 @@ export class WebviewPanel {
         });
         break;
       }
+      case 'importSettings':
+        this.saveSettings(msg.scope, msg.settings as Partial<Settings>);
+        break;
       case 'savePermissions':
         this.saveSettings(msg.scope, { permissions: msg.permissions });
         break;

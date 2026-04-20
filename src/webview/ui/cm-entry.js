@@ -1,5 +1,5 @@
-import { EditorState } from '@codemirror/state';
-import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection } from '@codemirror/view';
+import { EditorState, RangeSetBuilder } from '@codemirror/state';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, drawSelection, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { search, searchKeymap, openSearchPanel, closeSearchPanel, findNext, findPrevious, replaceNext, replaceAll, selectMatches, SearchQuery, SearchCursor, RegExpCursor, setSearchQuery, getSearchQuery } from '@codemirror/search';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
@@ -66,6 +66,28 @@ const markdownHighlight = HighlightStyle.define([
   { tag: tags.comment, opacity: '0.4', fontStyle: 'italic' },
   { tag: tags.quote, opacity: '0.65', fontStyle: 'italic' },
 ]);
+
+// ── $ARGUMENTS highlighter ─────────────────────────────────────────────────
+
+const argMark = Decoration.mark({ class: 'cm-argument' });
+const ARG_PAT = /\$(?:ARGUMENTS(?:_STDIN)?|\d+)\b/g;
+
+const argumentHighlighter = ViewPlugin.fromClass(class {
+  constructor(view) { this.decorations = this._build(view); }
+  update(u) { if (u.docChanged || u.viewportChanged) this.decorations = this._build(u.view); }
+  _build(view) {
+    const builder = new RangeSetBuilder();
+    for (const { from, to } of view.visibleRanges) {
+      const text = view.state.doc.sliceString(from, to);
+      ARG_PAT.lastIndex = 0;
+      let m;
+      while ((m = ARG_PAT.exec(text)) !== null) {
+        builder.add(from + m.index, from + m.index + m[0].length, argMark);
+      }
+    }
+    return builder.finish();
+  }
+}, { decorations: v => v.decorations });
 
 // ── Editor actions ─────────────────────────────────────────────────────────
 
@@ -252,7 +274,7 @@ function createVSCodeSearchPanel(view) {
 
 // ── createMarkdownEditor ───────────────────────────────────────────────────
 
-export function createMarkdownEditor(container, initialDoc, { onChange, height = '400px' } = {}) {
+export function createMarkdownEditor(container, initialDoc, { onChange, height = '400px', mode } = {}) {
   let view;
   let previewVisible = false;
   let previewBtnEl = null;
@@ -355,6 +377,7 @@ export function createMarkdownEditor(container, initialDoc, { onChange, height =
         history(),
         indentOnInput(),
         search({ top: true, createPanel: createVSCodeSearchPanel }),
+        ...(mode === 'commands' ? [argumentHighlighter] : []),
         syntaxHighlighting(markdownHighlight, { fallback: true }),
         markdown({ base: markdownLanguage }),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),

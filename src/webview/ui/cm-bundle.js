@@ -28076,6 +28076,29 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     { tag: tags.comment, opacity: "0.4", fontStyle: "italic" },
     { tag: tags.quote, opacity: "0.65", fontStyle: "italic" }
   ]);
+  var argMark = Decoration.mark({ class: "cm-argument" });
+  var ARG_PAT = /\$(?:ARGUMENTS(?:_STDIN)?|\d+)\b/g;
+  var argumentHighlighter = ViewPlugin.fromClass(class {
+    constructor(view) {
+      this.decorations = this._build(view);
+    }
+    update(u) {
+      if (u.docChanged || u.viewportChanged)
+        this.decorations = this._build(u.view);
+    }
+    _build(view) {
+      const builder = new RangeSetBuilder();
+      for (const { from, to } of view.visibleRanges) {
+        const text = view.state.doc.sliceString(from, to);
+        ARG_PAT.lastIndex = 0;
+        let m2;
+        while ((m2 = ARG_PAT.exec(text)) !== null) {
+          builder.add(from + m2.index, from + m2.index + m2[0].length, argMark);
+        }
+      }
+      return builder.finish();
+    }
+  }, { decorations: (v2) => v2.decorations });
   function wrapSel(view, before, after = before) {
     const { from, to } = view.state.selection.main;
     const sel = view.state.sliceDoc(from, to);
@@ -28279,7 +28302,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
     };
   }
-  function createMarkdownEditor(container, initialDoc, { onChange, height = "400px" } = {}) {
+  function createMarkdownEditor(container, initialDoc, { onChange, height = "400px", mode } = {}) {
     let view;
     let previewVisible = false;
     let previewBtnEl = null;
@@ -28379,6 +28402,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           history(),
           indentOnInput(),
           search({ top: true, createPanel: createVSCodeSearchPanel }),
+          ...mode === "commands" ? [argumentHighlighter] : [],
           syntaxHighlighting(markdownHighlight, { fallback: true }),
           markdown({ base: markdownLanguage }),
           keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),

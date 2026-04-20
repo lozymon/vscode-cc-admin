@@ -489,6 +489,17 @@
     /* replace row input-wrap has no count inside */
     .vsc-row:last-child .vsc-input-wrap { flex: 1; }
 
+    /* ── $ARGUMENTS highlight ── */
+    .cm-argument { background: rgba(156,220,254,0.15); border-radius: 2px; color: #9cdcfe; font-weight: 600; }
+
+    /* ── Import overlay ── */
+    #import-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:500; align-items:center; justify-content:center; }
+    #import-overlay.open { display:flex; }
+    #import-box { background:var(--sidebar-bg); border:1px solid var(--border); border-radius:8px; padding:20px; width:520px; max-width:92vw; }
+    #import-box h3 { margin:0 0 12px; font-size:14px; }
+    #import-textarea { width:100%; min-height:180px; font-family:monospace; font-size:12px; background:var(--input-bg); color:var(--input-fg); border:1px solid var(--input-border); border-radius:3px; padding:8px; box-sizing:border-box; resize:vertical; }
+    #import-error { color:var(--vscode-errorForeground,#f88); font-size:11px; margin-top:4px; min-height:16px; }
+
     /* ── List filter ── */
     .list-filter { width: 100%; margin-bottom: 10px; background: var(--input-bg); color: var(--input-fg); border: 1px solid var(--input-border); border-radius: 3px; padding: 5px 10px; font-size: 12px; font-family: inherit; outline: none; box-sizing: border-box; }
     .list-filter:focus { border-color: var(--accent); }
@@ -686,6 +697,7 @@
         <div class="card">
           <div class="card-header">Environment Variables</div>
           <div class="card-body">
+            <div style="font-size:11px;opacity:0.5;margin-bottom:8px">Use <code>${VAR:-default}</code> syntax in values for environment variable expansion.</div>
             <input id="env-filter" class="list-filter" placeholder="Filter variables…">
             <table style="margin-bottom:12px">
               <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
@@ -890,6 +902,7 @@
         <div class="save-bar" style="border:none;padding-top:0;gap:8px">
           <button id="save-advanced">Save</button>
           <button class="secondary" id="export-advanced-btn">Export JSON</button>
+          <button class="secondary" id="import-advanced-btn">Import JSON</button>
         </div>
       </section>
 
@@ -932,9 +945,13 @@
               <input id="mcp-header-val" placeholder="Bearer token" style="flex:2">
               <button id="mcp-header-add" type="button">Add</button>
             </div>
+            <div class="field" style="margin-top:10px;margin-bottom:0">
+              <label>Headers Helper <span style="font-weight:400;opacity:0.55">— shell command for dynamic auth headers</span></label>
+              <input id="mcp-headers-helper" placeholder="e.g. my-auth-helper --format json">
+            </div>
           </div>
           <div class="field">
-            <label>Environment Variables (optional)</label>
+            <label>Environment Variables <span style="font-weight:400;opacity:0.55">— use <code>${VAR:-default}</code> for expansion</span></label>
             <table style="margin-bottom:8px">
               <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
               <tbody id="mcp-env-tbody"></tbody>
@@ -1022,6 +1039,7 @@
         <div class="save-bar" style="border:none;padding-top:0;gap:8px">
           <button id="save-permissions">Save Permissions</button>
           <button class="secondary" id="export-settings-btn">Export JSON</button>
+          <button class="secondary" id="import-settings-btn">Import JSON</button>
         </div>
       </section>
 
@@ -1511,6 +1529,21 @@
   </aside>
 
   <div class="toast-container" id="toast-container"></div>
+
+  <!-- Import JSON overlay -->
+  <div id="import-overlay">
+    <div id="import-box">
+      <h3>Import Settings JSON</h3>
+      <div style="font-size:11px;opacity:0.55;margin-bottom:10px">Paste a <code>settings.json</code> object. Values will be merged into the current scope.</div>
+      <textarea id="import-textarea" placeholder='{"model": "claude-sonnet-4-6", "permissions": {...}}'></textarea>
+      <div id="import-error"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="import-apply">Apply</button>
+        <button class="secondary" id="import-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script src="main.js"></script>
 </body>
 </html>
