@@ -1326,7 +1326,12 @@ function renderAccount(cfg) {
   const body = document.getElementById('account-body');
   const acct = cfg.oauthAccount;
   if (!acct?.emailAddress) {
-    body.innerHTML = '<div class="empty">Not logged in.</div>';
+    body.innerHTML = `
+      <div class="empty">Not logged in.</div>
+      <div class="account-actions">
+        <button onclick="vscode.postMessage({type:'authLogin'})">Log in</button>
+      </div>
+    `;
     return;
   }
   const initials = (acct.displayName ?? acct.emailAddress)
@@ -1345,6 +1350,10 @@ function renderAccount(cfg) {
         <span class="account-badge">${esc(billingLabel)}</span>
         ${since ? `<span class="account-badge" style="margin-left:4px">since ${esc(since)}</span>` : ''}
       </div>
+    </div>
+    <div class="account-actions">
+      <button onclick="vscode.postMessage({type:'authLogin'})">Switch Account</button>
+      <button class="danger" onclick="vscode.postMessage({type:'authLogout'})">Log out</button>
     </div>
   `;
 }

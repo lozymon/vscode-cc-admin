@@ -39,7 +39,7 @@ export class WebviewPanel {
     this.panel = panel;
     this.panel.webview.html = this.getHtml();
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
-    this.panel.webview.onDidReceiveMessage(msg => this.handleMessage(msg), null, this.disposables);
+    this.panel.webview.onDidReceiveMessage(msg => { this.handleMessage(msg); }, null, this.disposables);
   }
 
   update(config: ConfigManager) {
@@ -61,7 +61,7 @@ export class WebviewPanel {
     };
   }
 
-  private handleMessage(msg: any) {
+  private async handleMessage(msg: any) {
     switch (msg.type) {
       case 'initProject':
         this.config.initProject(msg.options).then(() => {
@@ -128,6 +128,25 @@ export class WebviewPanel {
       case 'importSettings':
         this.saveSettings(msg.scope, msg.settings as Partial<Settings>);
         break;
+      case 'authLogin': {
+        const term = vscode.window.createTerminal({ name: 'Claude Auth' });
+        term.sendText('claude auth login');
+        term.show();
+        break;
+      }
+      case 'authLogout': {
+        const choice = await vscode.window.showWarningMessage(
+          'Log out of Claude Code?',
+          { modal: true },
+          'Log out'
+        );
+        if (choice === 'Log out') {
+          const term = vscode.window.createTerminal({ name: 'Claude Auth' });
+          term.sendText('claude auth logout');
+          term.show();
+        }
+        break;
+      }
       case 'savePermissions':
         this.saveSettings(msg.scope, { permissions: msg.permissions });
         break;

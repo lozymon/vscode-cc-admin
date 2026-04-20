@@ -494,6 +494,11 @@
     .account-info { display:flex; align-items:center; gap:14px; }
     .account-detail { font-size:11px; opacity:0.55; margin-top:2px; }
     .account-badge { display:inline-block; font-size:10px; font-weight:600; padding:2px 7px; border-radius:10px; background:rgba(99,179,237,0.18); color:#63b3ed; text-transform:capitalize; margin-top:6px; }
+    .account-actions { display:flex; gap:8px; margin-top:12px; }
+    .account-actions button { font-size:11px; padding:4px 12px; border-radius:4px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--fg); cursor:pointer; }
+    .account-actions button:hover { background:var(--item-hover); }
+    .account-actions button.danger { border-color:rgba(220,80,80,0.5); color:#e06c6c; }
+    .account-actions button.danger:hover { background:rgba(220,80,80,0.12); }
 
     /* ── $ARGUMENTS highlight ── */
     .cm-argument { background: rgba(156,220,254,0.15); border-radius: 2px; color: #9cdcfe; font-weight: 600; }
