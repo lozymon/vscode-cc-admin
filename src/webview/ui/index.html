@@ -1,1644 +1,2823 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claude Code Admin</title>
-  <style>
-    :root {
-      --bg: var(--vscode-editor-background);
-      --fg: var(--vscode-editor-foreground);
-      --border: var(--vscode-panel-border);
-      --input-bg: var(--vscode-input-background);
-      --input-fg: var(--vscode-input-foreground);
-      --input-border: var(--vscode-input-border);
-      --btn-bg: var(--vscode-button-background);
-      --btn-fg: var(--vscode-button-foreground);
-      --btn-hover: var(--vscode-button-hoverBackground);
-      --tag-bg: var(--vscode-badge-background);
-      --tag-fg: var(--vscode-badge-foreground);
-      --sidebar-bg: var(--vscode-sideBar-background);
-      --item-hover: var(--vscode-list-hoverBackground);
-      --item-active: var(--vscode-list-activeSelectionBackground);
-      --item-active-fg: var(--vscode-list-activeSelectionForeground);
-      --accent: var(--vscode-focusBorder);
-      --card-bg: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-      --radius: 6px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: var(--vscode-font-family);
-      font-size: 13px;
-      color: var(--fg);
-      background: var(--bg);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Claude Code Admin</title>
+    <style>
+      :root {
+        --bg: var(--vscode-editor-background);
+        --fg: var(--vscode-editor-foreground);
+        --border: var(--vscode-panel-border);
+        --input-bg: var(--vscode-input-background);
+        --input-fg: var(--vscode-input-foreground);
+        --input-border: var(--vscode-input-border);
+        --btn-bg: var(--vscode-button-background);
+        --btn-fg: var(--vscode-button-foreground);
+        --btn-hover: var(--vscode-button-hoverBackground);
+        --tag-bg: var(--vscode-badge-background);
+        --tag-fg: var(--vscode-badge-foreground);
+        --sidebar-bg: var(--vscode-sideBar-background);
+        --item-hover: var(--vscode-list-hoverBackground);
+        --item-active: var(--vscode-list-activeSelectionBackground);
+        --item-active-fg: var(--vscode-list-activeSelectionForeground);
+        --accent: var(--vscode-focusBorder);
+        --card-bg: var(
+          --vscode-editorWidget-background,
+          var(--vscode-sideBar-background)
+        );
+        --radius: 6px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--vscode-font-family);
+        font-size: 13px;
+        color: var(--fg);
+        background: var(--bg);
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 200px;
-      min-width: 200px;
-      background: var(--sidebar-bg);
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 200px;
+        min-width: 200px;
+        background: var(--sidebar-bg);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
 
-    .sidebar-header {
-      padding: 16px 14px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .sidebar-header h1 {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      opacity: 0.6;
-      margin-bottom: 10px;
-    }
+      .sidebar-header {
+        padding: 16px 14px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-header h1 {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.6;
+        margin-bottom: 10px;
+      }
 
-    .scope-switch {
-      display: flex;
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 2px;
-      gap: 2px;
-    }
-    .scope-tab {
-      flex: 1;
-      padding: 4px 0;
-      border: none;
-      background: transparent;
-      color: var(--fg);
-      cursor: pointer;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      opacity: 0.6;
-      transition: all 0.15s;
-    }
-    .scope-tab.active {
-      background: var(--btn-bg);
-      color: var(--btn-fg);
-      opacity: 1;
-    }
+      .scope-switch {
+        display: flex;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2px;
+        gap: 2px;
+      }
+      .scope-tab {
+        flex: 1;
+        padding: 4px 0;
+        border: none;
+        background: transparent;
+        color: var(--fg);
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        opacity: 0.6;
+        transition: all 0.15s;
+      }
+      .scope-tab.active {
+        background: var(--btn-bg);
+        color: var(--btn-fg);
+        opacity: 1;
+      }
 
-    .nav {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .nav-group-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      opacity: 0.4;
-      padding: 8px 8px 4px;
-    }
-    .nav-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      border: none;
-      background: transparent;
-      color: var(--fg);
-      cursor: pointer;
-      border-radius: 4px;
-      font-size: 12px;
-      text-align: left;
-      width: 100%;
-      opacity: 0.75;
-      transition: all 0.1s;
-    }
-    .nav-btn:hover { background: var(--item-hover); opacity: 1; }
-    .nav-btn.active {
-      background: var(--item-active);
-      color: var(--item-active-fg);
-      opacity: 1;
-      font-weight: 600;
-    }
-    .nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+      .nav {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .nav-group-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.4;
+        padding: 8px 8px 4px;
+      }
+      .nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border: none;
+        background: transparent;
+        color: var(--fg);
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 12px;
+        text-align: left;
+        width: 100%;
+        opacity: 0.75;
+        transition: all 0.1s;
+      }
+      .nav-btn:hover {
+        background: var(--item-hover);
+        opacity: 1;
+      }
+      .nav-btn.active {
+        background: var(--item-active);
+        color: var(--item-active-fg);
+        opacity: 1;
+        font-weight: 600;
+      }
+      .nav-icon {
+        font-size: 14px;
+        width: 18px;
+        text-align: center;
+        flex-shrink: 0;
+      }
 
-    /* ── Main ── */
-    .main-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+      /* ── Main ── */
+      .main-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
 
-    .topbar {
-      padding: 10px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--bg);
-    }
-    .topbar-title {
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .topbar-scope-badge {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 2px 7px;
-      border-radius: 10px;
-      background: var(--tag-bg);
-      color: var(--tag-fg);
-    }
+      .topbar {
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg);
+      }
+      .topbar-title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .topbar-scope-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: var(--tag-bg);
+        color: var(--tag-fg);
+      }
 
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 24px;
-    }
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+      }
 
-    section { display: none; }
-    section.active { display: block; }
+      section {
+        display: none;
+      }
+      section.active {
+        display: block;
+      }
 
-    /* ── Cards ── */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-    }
-    .card-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      opacity: 0.6;
-    }
-    .card-body { padding: 16px; }
+      /* ── Cards ── */
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 16px;
+      }
+      .card-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.6;
+      }
+      .card-body {
+        padding: 16px;
+      }
 
-    h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
-    h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 0 0 10px; }
+      h2 {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      h3 {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.55;
+        margin: 0 0 10px;
+      }
 
-    /* ── Form ── */
-    label { display: block; margin-bottom: 5px; font-size: 12px; opacity: 0.75; }
-    input, select, textarea {
-      width: 100%;
-      padding: 6px 10px;
-      background: var(--input-bg);
-      color: var(--input-fg);
-      border: 1px solid var(--input-border);
-      border-radius: 4px;
-      font-size: 12px;
-      font-family: inherit;
-      transition: border-color 0.15s;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-    textarea {
-      resize: vertical;
-      min-height: 300px;
-      font-family: var(--vscode-editor-font-family, monospace);
-      font-size: 12px;
-    }
-    .field { margin-bottom: 14px; }
-    .field:last-child { margin-bottom: 0; }
-    .row { display: flex; gap: 8px; align-items: center; }
+      /* ── Form ── */
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 12px;
+        opacity: 0.75;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 6px 10px;
+        background: var(--input-bg);
+        color: var(--input-fg);
+        border: 1px solid var(--input-border);
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: inherit;
+        transition: border-color 0.15s;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 300px;
+        font-family: var(--vscode-editor-font-family, monospace);
+        font-size: 12px;
+      }
+      .field {
+        margin-bottom: 14px;
+      }
+      .field:last-child {
+        margin-bottom: 0;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
 
-    /* ── Buttons ── */
-    button {
-      padding: 6px 14px;
-      background: var(--btn-bg);
-      color: var(--btn-fg);
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-family: inherit;
-      font-weight: 500;
-      transition: background 0.15s;
-    }
-    button:hover { background: var(--btn-hover); }
-    button.secondary {
-      background: transparent;
-      color: var(--fg);
-      border: 1px solid var(--border);
-    }
-    button.secondary:hover { background: var(--item-hover); }
-    button.danger {
-      background: transparent;
-      color: var(--vscode-errorForeground);
-      border: 1px solid var(--vscode-errorForeground);
-    }
-    button.danger:hover { background: var(--vscode-errorForeground); color: #fff; }
-    button.icon-btn { padding: 3px 8px; font-size: 11px; }
-    button.ghost {
-      background: transparent;
-      color: var(--fg);
-      border: none;
-      opacity: 0.6;
-      padding: 4px 8px;
-    }
-    button.ghost:hover { opacity: 1; background: var(--item-hover); }
+      /* ── Buttons ── */
+      button {
+        padding: 6px 14px;
+        background: var(--btn-bg);
+        color: var(--btn-fg);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: inherit;
+        font-weight: 500;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: var(--btn-hover);
+      }
+      button.secondary {
+        background: transparent;
+        color: var(--fg);
+        border: 1px solid var(--border);
+      }
+      button.secondary:hover {
+        background: var(--item-hover);
+      }
+      button.danger {
+        background: transparent;
+        color: var(--vscode-errorForeground);
+        border: 1px solid var(--vscode-errorForeground);
+      }
+      button.danger:hover {
+        background: var(--vscode-errorForeground);
+        color: #fff;
+      }
+      button.icon-btn {
+        padding: 3px 8px;
+        font-size: 11px;
+      }
+      button.ghost {
+        background: transparent;
+        color: var(--fg);
+        border: none;
+        opacity: 0.6;
+        padding: 4px 8px;
+      }
+      button.ghost:hover {
+        opacity: 1;
+        background: var(--item-hover);
+      }
 
-    /* ── Save bar ── */
-    .save-bar {
-      display: flex;
-      gap: 8px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-      margin-top: 16px;
-    }
+      /* ── Save bar ── */
+      .save-bar {
+        display: flex;
+        gap: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        margin-top: 16px;
+      }
 
-    /* ── Tags ── */
-    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; margin-bottom: 10px; }
-    .tag {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      background: var(--tag-bg);
-      color: var(--tag-fg);
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .tag button {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      font-size: 14px;
-      line-height: 1;
-      opacity: 0.7;
-      border: none;
-    }
-    .tag button:hover { opacity: 1; background: transparent; }
+      /* ── Tags ── */
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 32px;
+        margin-bottom: 10px;
+      }
+      .tag {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        background: var(--tag-bg);
+        color: var(--tag-fg);
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .tag button {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1;
+        opacity: 0.7;
+        border: none;
+      }
+      .tag button:hover {
+        opacity: 1;
+        background: transparent;
+      }
 
-    /* ── Table ── */
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th {
-      text-align: left;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--border);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      opacity: 0.5;
-    }
-    td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tbody tr:hover td { background: var(--item-hover); }
+      /* ── Table ── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      th {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.5;
+      }
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr:hover td {
+        background: var(--item-hover);
+      }
 
-    /* ── Toggle ── */
-    .toggle { position: relative; display: inline-block; width: 34px; height: 20px; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: var(--border);
-      border-radius: 20px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .toggle input:checked + .toggle-slider { background: var(--accent); }
-    .toggle-slider:before {
-      content: '';
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      left: 3px;
-      top: 3px;
-      background: white;
-      border-radius: 50%;
-      transition: 0.2s;
-    }
-    .toggle input:checked + .toggle-slider:before { transform: translateX(14px); }
+      /* ── Toggle ── */
+      .toggle {
+        position: relative;
+        display: inline-block;
+        width: 34px;
+        height: 20px;
+      }
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background: var(--border);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .toggle input:checked + .toggle-slider {
+        background: var(--accent);
+      }
+      .toggle-slider:before {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        left: 3px;
+        top: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: 0.2s;
+      }
+      .toggle input:checked + .toggle-slider:before {
+        transform: translateX(14px);
+      }
 
-    /* ── File list ── */
-    .file-list { display: flex; flex-direction: column; gap: 4px; }
-    .file-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background: var(--item-hover);
-      border: 1px solid transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: border-color 0.1s;
-    }
-    .file-item:hover { border-color: var(--border); }
-    .file-item-active { border-color: var(--accent) !important; background: var(--item-active); }
-    .file-item .name { font-weight: 600; font-size: 12px; flex: 0 0 auto; }
-    .file-item .desc { opacity: 0.55; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-    .file-item .actions { display: flex; gap: 4px; flex: 0 0 auto; }
+      /* ── File list ── */
+      .file-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .file-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: var(--item-hover);
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: border-color 0.1s;
+      }
+      .file-item:hover {
+        border-color: var(--border);
+      }
+      .file-item-active {
+        border-color: var(--accent) !important;
+        background: var(--item-active);
+      }
+      .file-item .name {
+        font-weight: 600;
+        font-size: 12px;
+        flex: 0 0 auto;
+      }
+      .file-item .desc {
+        opacity: 0.55;
+        font-size: 11px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      .file-item .actions {
+        display: flex;
+        gap: 4px;
+        flex: 0 0 auto;
+      }
 
-    /* ── Hook item ── */
-    .hook-item {
-      background: var(--item-hover);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-    }
-    .hook-event {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-    .hook-matcher { font-size: 11px; opacity: 0.65; margin-bottom: 4px; }
-    .hook-command { font-family: monospace; font-size: 11px; word-break: break-all; }
-    .hook-actions { display: flex; gap: 4px; margin-top: 8px; }
+      /* ── Hook item ── */
+      .hook-item {
+        background: var(--item-hover);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+      }
+      .hook-event {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--accent);
+        margin-bottom: 4px;
+      }
+      .hook-matcher {
+        font-size: 11px;
+        opacity: 0.65;
+        margin-bottom: 4px;
+      }
+      .hook-command {
+        font-family: monospace;
+        font-size: 11px;
+        word-break: break-all;
+      }
+      .hook-actions {
+        display: flex;
+        gap: 4px;
+        margin-top: 8px;
+      }
 
-    /* ── Inline form ── */
-    .inline-form {
-      background: var(--sidebar-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      margin-top: 12px;
-    }
-    .inline-form h3 { margin-bottom: 12px; }
+      /* ── Inline form ── */
+      .inline-form {
+        background: var(--sidebar-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        margin-top: 12px;
+      }
+      .inline-form h3 {
+        margin-bottom: 12px;
+      }
 
-    .empty { opacity: 0.45; font-size: 12px; padding: 8px 0; }
+      .empty {
+        opacity: 0.45;
+        font-size: 12px;
+        padding: 8px 0;
+      }
 
-    /* ── Divider ── */
-    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+      /* ── Divider ── */
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 16px 0;
+      }
 
-    /* ── Init banner ── */
-    .init-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      background: var(--item-hover);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-    }
-    .init-banner-icon { font-size: 18px; flex-shrink: 0; }
-    .not-init-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--vscode-inputValidation-warningBackground, rgba(255,200,0,0.1));
-      border: 1px solid var(--vscode-inputValidation-warningBorder, rgba(255,200,0,0.4));
-      border-radius: 4px;
-      padding: 10px 14px;
-      margin-bottom: 16px;
-      font-size: 12px;
-    }
-    .not-init-bar button { flex-shrink: 0; }
-    .checkbox-label { display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; }
-    .checkbox-label input { width:auto; }
+      /* ── Init banner ── */
+      .init-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: var(--item-hover);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+      }
+      .init-banner-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      .not-init-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(
+          --vscode-inputValidation-warningBackground,
+          rgba(255, 200, 0, 0.1)
+        );
+        border: 1px solid
+          var(--vscode-inputValidation-warningBorder, rgba(255, 200, 0, 0.4));
+        border-radius: 4px;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        font-size: 12px;
+      }
+      .not-init-bar button {
+        flex-shrink: 0;
+      }
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .checkbox-label input {
+        width: auto;
+      }
 
-    /* ── Dashboard cards ── */
-    .dash-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .dash-card:hover { border-color: var(--accent); background: var(--item-hover); }
-    .dash-icon { font-size: 20px; margin-bottom: 8px; }
-    .dash-value { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    .dash-label { font-size: 11px; opacity: 0.55; text-transform: uppercase; letter-spacing: 0.05em; }
+      /* ── Dashboard cards ── */
+      .dash-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .dash-card:hover {
+        border-color: var(--accent);
+        background: var(--item-hover);
+      }
+      .dash-icon {
+        font-size: 20px;
+        margin-bottom: 8px;
+      }
+      .dash-value {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .dash-label {
+        font-size: 11px;
+        opacity: 0.55;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
 
-    /* ── Markdown editor chrome ── */
-    .md-toolbar {
-      display: flex; align-items: center; gap: 2px; padding: 5px 8px;
-      background: var(--sidebar-bg); border-bottom: 1px solid var(--border);
-      flex-shrink: 0; flex-wrap: wrap;
-    }
-    .tb-btn {
-      padding: 3px 9px; font-size: 11px; font-weight: 600;
-      background: transparent; border: none; color: var(--fg);
-      opacity: 0.6; border-radius: 3px; cursor: pointer;
-      font-family: inherit; line-height: 1.5;
-      transition: opacity 0.1s, background 0.1s;
-    }
-    .tb-btn:hover { opacity: 1; background: var(--item-hover); }
-    .tb-btn.tb-active { opacity: 1; background: var(--item-active); color: var(--item-active-fg); }
-    .tb-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
-    .tb-spacer { flex: 1; }
-    .md-preview {
-      flex: 1; overflow-y: auto; padding: 14px 18px;
-      border-left: 1px solid var(--border); font-size: 13px; line-height: 1.65;
-      display: none;
-    }
-    .md-preview.md-preview-visible { display: block; }
-    .md-preview h1 { font-size: 1.35em; font-weight: 700; margin: 0 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-    .md-preview h2 { font-size: 1.15em; font-weight: 700; margin: 16px 0 8px; }
-    .md-preview h3 { font-size: 1.0em; font-weight: 600; margin: 14px 0 6px; }
-    .md-preview h4, .md-preview h5 { font-weight: 600; margin: 10px 0 4px; opacity: 0.85; }
-    .md-preview p { margin: 0 0 10px; }
-    .md-preview ul, .md-preview ol { padding-left: 20px; margin: 0 0 10px; }
-    .md-preview li { margin-bottom: 3px; }
-    .md-preview code { font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; background: var(--input-bg); padding: 1px 5px; border-radius: 3px; }
-    .md-preview pre { background: var(--input-bg); padding: 12px; border-radius: 4px; overflow-x: auto; margin: 0 0 10px; }
-    .md-preview pre code { background: none; padding: 0; }
-    .md-preview blockquote { border-left: 3px solid var(--border); margin: 0 0 10px; padding: 2px 0 2px 12px; opacity: 0.7; }
-    .md-preview a { color: var(--accent); }
-    .md-preview hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-    .md-preview table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
-    .md-preview th, .md-preview td { border: 1px solid var(--border); padding: 5px 10px; }
-    .md-preview th { background: var(--sidebar-bg); font-weight: 600; }
-    .md-statusbar {
-      display: flex; align-items: center; justify-content: flex-end;
-      padding: 3px 12px; font-size: 10px; opacity: 0.4;
-      background: var(--sidebar-bg); border-top: 1px solid var(--border);
-      flex-shrink: 0;
-    }
+      /* ── Markdown editor chrome ── */
+      .md-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 5px 8px;
+        background: var(--sidebar-bg);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        flex-wrap: wrap;
+      }
+      .tb-btn {
+        padding: 3px 9px;
+        font-size: 11px;
+        font-weight: 600;
+        background: transparent;
+        border: none;
+        color: var(--fg);
+        opacity: 0.6;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: inherit;
+        line-height: 1.5;
+        transition:
+          opacity 0.1s,
+          background 0.1s;
+      }
+      .tb-btn:hover {
+        opacity: 1;
+        background: var(--item-hover);
+      }
+      .tb-btn.tb-active {
+        opacity: 1;
+        background: var(--item-active);
+        color: var(--item-active-fg);
+      }
+      .tb-sep {
+        width: 1px;
+        height: 16px;
+        background: var(--border);
+        margin: 0 4px;
+        flex-shrink: 0;
+      }
+      .tb-spacer {
+        flex: 1;
+      }
+      .md-preview {
+        flex: 1;
+        overflow-y: auto;
+        padding: 14px 18px;
+        border-left: 1px solid var(--border);
+        font-size: 13px;
+        line-height: 1.65;
+        display: none;
+      }
+      .md-preview.md-preview-visible {
+        display: block;
+      }
+      .md-preview h1 {
+        font-size: 1.35em;
+        font-weight: 700;
+        margin: 0 0 10px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 6px;
+      }
+      .md-preview h2 {
+        font-size: 1.15em;
+        font-weight: 700;
+        margin: 16px 0 8px;
+      }
+      .md-preview h3 {
+        font-size: 1em;
+        font-weight: 600;
+        margin: 14px 0 6px;
+      }
+      .md-preview h4,
+      .md-preview h5 {
+        font-weight: 600;
+        margin: 10px 0 4px;
+        opacity: 0.85;
+      }
+      .md-preview p {
+        margin: 0 0 10px;
+      }
+      .md-preview ul,
+      .md-preview ol {
+        padding-left: 20px;
+        margin: 0 0 10px;
+      }
+      .md-preview li {
+        margin-bottom: 3px;
+      }
+      .md-preview code {
+        font-family: var(--vscode-editor-font-family, monospace);
+        font-size: 11px;
+        background: var(--input-bg);
+        padding: 1px 5px;
+        border-radius: 3px;
+      }
+      .md-preview pre {
+        background: var(--input-bg);
+        padding: 12px;
+        border-radius: 4px;
+        overflow-x: auto;
+        margin: 0 0 10px;
+      }
+      .md-preview pre code {
+        background: none;
+        padding: 0;
+      }
+      .md-preview blockquote {
+        border-left: 3px solid var(--border);
+        margin: 0 0 10px;
+        padding: 2px 0 2px 12px;
+        opacity: 0.7;
+      }
+      .md-preview a {
+        color: var(--accent);
+      }
+      .md-preview hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 14px 0;
+      }
+      .md-preview table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      .md-preview th,
+      .md-preview td {
+        border: 1px solid var(--border);
+        padding: 5px 10px;
+      }
+      .md-preview th {
+        background: var(--sidebar-bg);
+        font-weight: 600;
+      }
+      .md-statusbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 3px 12px;
+        font-size: 10px;
+        opacity: 0.4;
+        background: var(--sidebar-bg);
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
 
-    /* ── VSCode search panel ── */
-    .vsc-search-panel { background: var(--sidebar-bg); padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
-    .vsc-row { display: flex; align-items: center; gap: 4px; }
-    /* input-wrap is now a flex row that forms the "input box" visually */
-    .vsc-input-wrap { display: flex; align-items: center; flex: 1; min-width: 0; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 3px; overflow: hidden; }
-    .vsc-input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-    .vsc-input { background: transparent; color: var(--input-fg); border: none; padding: 4px 6px; font-size: 12px; font-family: inherit; outline: none; flex: 1; min-width: 0; }
-    .vsc-input-opts { display: flex; gap: 1px; padding: 0 3px; flex-shrink: 0; }
-    .vsc-opt { background: transparent; border: none; padding: 2px 4px; font-size: 11px; font-weight: 600; color: var(--fg); opacity: 0.4; border-radius: 2px; cursor: pointer; font-family: inherit; line-height: 1; }
-    .vsc-opt:hover { opacity: 1; background: var(--item-hover); }
-    .vsc-opt.vsc-opt-on { opacity: 1; background: var(--item-active); color: var(--item-active-fg); }
-    /* match count lives inside the find input-wrap on the right */
-    .vsc-match-count { font-size: 11px; opacity: 0.55; white-space: nowrap; padding: 0 6px; flex-shrink: 0; border-left: 1px solid var(--border); align-self: stretch; display: flex; align-items: center; }
-    .vsc-actions { display: flex; align-items: center; gap: 1px; flex-shrink: 0; }
-    .vsc-sep { width: 1px; height: 14px; background: var(--border); margin: 0 2px; }
-    .vsc-action { background: transparent; border: none; padding: 3px 7px; font-size: 13px; color: var(--fg); opacity: 0.6; border-radius: 3px; cursor: pointer; font-family: inherit; white-space: nowrap; line-height: 1; }
-    .vsc-action:hover { opacity: 1; background: var(--item-hover); }
-    .vsc-close { border: 1px solid var(--border); opacity: 0.5; }
-    .vsc-close:hover { opacity: 1; background: var(--vscode-errorForeground, #e05252); color: #fff; border-color: transparent; }
-    /* replace row input-wrap has no count inside */
-    .vsc-row:last-child .vsc-input-wrap { flex: 1; }
+      /* ── VSCode search panel ── */
+      .vsc-search-panel {
+        background: var(--sidebar-bg);
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .vsc-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      /* input-wrap is now a flex row that forms the "input box" visually */
+      .vsc-input-wrap {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .vsc-input-wrap:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+      .vsc-input {
+        background: transparent;
+        color: var(--input-fg);
+        border: none;
+        padding: 4px 6px;
+        font-size: 12px;
+        font-family: inherit;
+        outline: none;
+        flex: 1;
+        min-width: 0;
+      }
+      .vsc-input-opts {
+        display: flex;
+        gap: 1px;
+        padding: 0 3px;
+        flex-shrink: 0;
+      }
+      .vsc-opt {
+        background: transparent;
+        border: none;
+        padding: 2px 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--fg);
+        opacity: 0.4;
+        border-radius: 2px;
+        cursor: pointer;
+        font-family: inherit;
+        line-height: 1;
+      }
+      .vsc-opt:hover {
+        opacity: 1;
+        background: var(--item-hover);
+      }
+      .vsc-opt.vsc-opt-on {
+        opacity: 1;
+        background: var(--item-active);
+        color: var(--item-active-fg);
+      }
+      /* match count lives inside the find input-wrap on the right */
+      .vsc-match-count {
+        font-size: 11px;
+        opacity: 0.55;
+        white-space: nowrap;
+        padding: 0 6px;
+        flex-shrink: 0;
+        border-left: 1px solid var(--border);
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+      }
+      .vsc-actions {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        flex-shrink: 0;
+      }
+      .vsc-sep {
+        width: 1px;
+        height: 14px;
+        background: var(--border);
+        margin: 0 2px;
+      }
+      .vsc-action {
+        background: transparent;
+        border: none;
+        padding: 3px 7px;
+        font-size: 13px;
+        color: var(--fg);
+        opacity: 0.6;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: inherit;
+        white-space: nowrap;
+        line-height: 1;
+      }
+      .vsc-action:hover {
+        opacity: 1;
+        background: var(--item-hover);
+      }
+      .vsc-close {
+        border: 1px solid var(--border);
+        opacity: 0.5;
+      }
+      .vsc-close:hover {
+        opacity: 1;
+        background: var(--vscode-errorForeground, #e05252);
+        color: #fff;
+        border-color: transparent;
+      }
+      /* replace row input-wrap has no count inside */
+      .vsc-row:last-child .vsc-input-wrap {
+        flex: 1;
+      }
 
-    /* ── Account card ── */
-    .account-avatar { width:40px; height:40px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff; flex-shrink:0; }
-    .account-info { display:flex; align-items:center; gap:14px; }
-    .account-detail { font-size:11px; opacity:0.55; margin-top:2px; }
-    .account-badge { display:inline-block; font-size:10px; font-weight:600; padding:2px 7px; border-radius:10px; background:rgba(99,179,237,0.18); color:#63b3ed; text-transform:capitalize; margin-top:6px; }
-    .account-actions { display:flex; gap:8px; margin-top:12px; }
-    .account-actions button { font-size:11px; padding:4px 12px; border-radius:4px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--fg); cursor:pointer; }
-    .account-actions button:hover { background:var(--item-hover); }
-    .account-actions button.danger { border-color:rgba(220,80,80,0.5); color:#e06c6c; }
-    .account-actions button.danger:hover { background:rgba(220,80,80,0.12); }
+      /* ── Account card ── */
+      .account-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .account-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .account-detail {
+        font-size: 11px;
+        opacity: 0.55;
+        margin-top: 2px;
+      }
+      .account-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: rgba(99, 179, 237, 0.18);
+        color: #63b3ed;
+        text-transform: capitalize;
+        margin-top: 6px;
+      }
+      .account-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .account-actions button {
+        font-size: 11px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        border: 1px solid var(--input-border);
+        background: var(--input-bg);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .account-actions button:hover {
+        background: var(--item-hover);
+      }
+      .account-actions button.danger {
+        border-color: rgba(220, 80, 80, 0.5);
+        color: #e06c6c;
+      }
+      .account-actions button.danger:hover {
+        background: rgba(220, 80, 80, 0.12);
+      }
 
-    /* ── $ARGUMENTS highlight ── */
-    .cm-argument { background: rgba(156,220,254,0.15); border-radius: 2px; color: #9cdcfe; font-weight: 600; }
+      /* ── $ARGUMENTS highlight ── */
+      .cm-argument {
+        background: rgba(156, 220, 254, 0.15);
+        border-radius: 2px;
+        color: #9cdcfe;
+        font-weight: 600;
+      }
 
-    /* ── Import overlay ── */
-    #import-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:500; align-items:center; justify-content:center; }
-    #import-overlay.open { display:flex; }
-    #import-box { background:var(--sidebar-bg); border:1px solid var(--border); border-radius:8px; padding:20px; width:520px; max-width:92vw; }
-    #import-box h3 { margin:0 0 12px; font-size:14px; }
-    #import-textarea { width:100%; min-height:180px; font-family:monospace; font-size:12px; background:var(--input-bg); color:var(--input-fg); border:1px solid var(--input-border); border-radius:3px; padding:8px; box-sizing:border-box; resize:vertical; }
-    #import-error { color:var(--vscode-errorForeground,#f88); font-size:11px; margin-top:4px; min-height:16px; }
+      /* ── Import overlay ── */
+      #import-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 500;
+        align-items: center;
+        justify-content: center;
+      }
+      #import-overlay.open {
+        display: flex;
+      }
+      #import-box {
+        background: var(--sidebar-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        width: 520px;
+        max-width: 92vw;
+      }
+      #import-box h3 {
+        margin: 0 0 12px;
+        font-size: 14px;
+      }
+      #import-textarea {
+        width: 100%;
+        min-height: 180px;
+        font-family: monospace;
+        font-size: 12px;
+        background: var(--input-bg);
+        color: var(--input-fg);
+        border: 1px solid var(--input-border);
+        border-radius: 3px;
+        padding: 8px;
+        box-sizing: border-box;
+        resize: vertical;
+      }
+      #import-error {
+        color: var(--vscode-errorForeground, #f88);
+        font-size: 11px;
+        margin-top: 4px;
+        min-height: 16px;
+      }
 
-    /* ── Diff overlay ── */
-    #diff-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:500; align-items:center; justify-content:center; }
-    #diff-overlay.open { display:flex; }
-    #diff-box { background:var(--sidebar-bg); border:1px solid var(--border); border-radius:8px; padding:20px; width:640px; max-width:94vw; max-height:80vh; display:flex; flex-direction:column; }
-    #diff-box h3 { margin:0 0 12px; font-size:14px; flex-shrink:0; }
-    #diff-scroll { overflow-y:auto; flex:1; min-height:0; }
-    .diff-table { width:100%; border-collapse:collapse; font-size:12px; }
-    .diff-table th { text-align:left; padding:4px 8px; font-size:11px; opacity:0.5; font-weight:600; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--sidebar-bg); }
-    .diff-table td { padding:5px 8px; vertical-align:top; border-bottom:1px solid rgba(255,255,255,0.04); font-family:monospace; word-break:break-all; }
-    .diff-table td:first-child { opacity:0.7; font-family:inherit; font-size:11px; white-space:nowrap; }
-    .diff-added { background:rgba(0,200,80,0.07); }
-    .diff-removed { background:rgba(255,70,70,0.07); }
-    .diff-changed { background:rgba(255,200,0,0.06); }
-    .diff-old { opacity:0.55; text-decoration:line-through; }
+      /* ── Diff overlay ── */
+      #diff-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 500;
+        align-items: center;
+        justify-content: center;
+      }
+      #diff-overlay.open {
+        display: flex;
+      }
+      #diff-box {
+        background: var(--sidebar-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+        width: 640px;
+        max-width: 94vw;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+      }
+      #diff-box h3 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+      #diff-scroll {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
+      .diff-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      .diff-table th {
+        text-align: left;
+        padding: 4px 8px;
+        font-size: 11px;
+        opacity: 0.5;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: var(--sidebar-bg);
+      }
+      .diff-table td {
+        padding: 5px 8px;
+        vertical-align: top;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-family: monospace;
+        word-break: break-all;
+      }
+      .diff-table td:first-child {
+        opacity: 0.7;
+        font-family: inherit;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .diff-added {
+        background: rgba(0, 200, 80, 0.07);
+      }
+      .diff-removed {
+        background: rgba(255, 70, 70, 0.07);
+      }
+      .diff-changed {
+        background: rgba(255, 200, 0, 0.06);
+      }
+      .diff-old {
+        opacity: 0.55;
+        text-decoration: line-through;
+      }
 
-    /* ── List filter ── */
-    .list-filter { width: 100%; margin-bottom: 10px; background: var(--input-bg); color: var(--input-fg); border: 1px solid var(--input-border); border-radius: 3px; padding: 5px 10px; font-size: 12px; font-family: inherit; outline: none; box-sizing: border-box; }
-    .list-filter:focus { border-color: var(--accent); }
+      /* ── List filter ── */
+      .list-filter {
+        width: 100%;
+        margin-bottom: 10px;
+        background: var(--input-bg);
+        color: var(--input-fg);
+        border: 1px solid var(--input-border);
+        border-radius: 3px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-family: inherit;
+        outline: none;
+        box-sizing: border-box;
+      }
+      .list-filter:focus {
+        border-color: var(--accent);
+      }
 
-    /* ── Hint chips ── */
-    .hint-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .hint-chip { background: var(--item-hover); border: 1px solid var(--border); border-radius: 3px; padding: 2px 8px; font-size: 11px; font-family: monospace; color: var(--fg); opacity: 0.7; cursor: pointer; white-space: nowrap; }
-    .hint-chip:hover { opacity: 1; background: var(--item-active); color: var(--item-active-fg); border-color: transparent; }
+      /* ── Hint chips ── */
+      .hint-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .hint-chip {
+        background: var(--item-hover);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-family: monospace;
+        color: var(--fg);
+        opacity: 0.7;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .hint-chip:hover {
+        opacity: 1;
+        background: var(--item-active);
+        color: var(--item-active-fg);
+        border-color: transparent;
+      }
 
-    /* ── Frontmatter panel ── */
-    .frontmatter-panel { background: var(--sidebar-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; }
-    .frontmatter-panel .fm-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.45; margin-bottom: 8px; }
-    .frontmatter-panel .fm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .frontmatter-panel .fm-grid .field { margin: 0; }
-    .frontmatter-panel .fm-full { grid-column: 1 / -1; }
+      /* ── Frontmatter panel ── */
+      .frontmatter-panel {
+        background: var(--sidebar-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .frontmatter-panel .fm-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        opacity: 0.45;
+        margin-bottom: 8px;
+      }
+      .frontmatter-panel .fm-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .frontmatter-panel .fm-grid .field {
+        margin: 0;
+      }
+      .frontmatter-panel .fm-full {
+        grid-column: 1 / -1;
+      }
 
-    /* ── Unsaved indicator ── */
-    button.dirty::after {
-      content: '';
-      display: inline-block;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--vscode-notificationsWarningIcon-foreground, #f0a500);
-      margin-left: 7px;
-      vertical-align: middle;
-    }
+      /* ── Unsaved indicator ── */
+      button.dirty::after {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--vscode-notificationsWarningIcon-foreground, #f0a500);
+        margin-left: 7px;
+        vertical-align: middle;
+      }
 
-    /* ── Toast ── */
-    .toast-container {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      z-index: 9999;
-      pointer-events: none;
-    }
-    .toast {
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background: var(--vscode-notificationCenter-border, #333);
-      color: var(--fg);
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-      animation: toastIn 0.18s ease;
-      opacity: 1;
-      transition: opacity 0.3s;
-    }
-    .toast.success { border-color: var(--vscode-testing-iconPassed, #4caf50); }
-    .toast.error { border-color: var(--vscode-errorForeground, #f44336); color: var(--vscode-errorForeground, #f44336); }
-    @keyframes toastIn {
-      from { transform: translateY(8px); opacity: 0; }
-      to   { transform: translateY(0);   opacity: 1; }
-    }
-  </style>
-</head>
-<body>
+      /* ── Toast ── */
+      .toast-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      .toast {
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--vscode-notificationCenter-border, #333);
+        color: var(--fg);
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        animation: toastIn 0.18s ease;
+        opacity: 1;
+        transition: opacity 0.3s;
+      }
+      .toast.success {
+        border-color: var(--vscode-testing-iconPassed, #4caf50);
+      }
+      .toast.error {
+        border-color: var(--vscode-errorForeground, #f44336);
+        color: var(--vscode-errorForeground, #f44336);
+      }
+      @keyframes toastIn {
+        from {
+          transform: translateY(8px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Main area -->
+    <div class="main-area">
+      <div class="topbar">
+        <span class="topbar-title" id="topbar-title">Model</span>
+        <span class="topbar-scope-badge" id="topbar-scope">Project</span>
+      </div>
+      <div class="content">
+        <!-- Dashboard -->
+        <section id="sec-dashboard" class="active">
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+              gap: 12px;
+              margin-bottom: 20px;
+            "
+            id="dash-grid"
+          ></div>
+        </section>
 
-  <!-- Main area -->
-  <div class="main-area">
-    <div class="topbar">
-      <span class="topbar-title" id="topbar-title">Model</span>
-      <span class="topbar-scope-badge" id="topbar-scope">Project</span>
+        <!-- Initialize -->
+        <section id="sec-init">
+          <div class="card">
+            <div class="card-header">Initialize Claude Code</div>
+            <div class="card-body">
+              <div class="init-banner" id="init-already" style="display: none">
+                <span class="init-banner-icon">✅</span>
+                <div>
+                  <strong>Already initialized</strong>
+                  <div style="opacity: 0.6; font-size: 12px; margin-top: 2px">
+                    Running this will add any missing files without overwriting
+                    existing ones.
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <select id="init-model">
+                  <option value="claude-sonnet-4-6">
+                    claude-sonnet-4-6 — Sonnet 4.6
+                  </option>
+                  <option value="claude-opus-4-7">
+                    claude-opus-4-7 — Opus 4.7
+                  </option>
+                  <option value="claude-haiku-4-5-20251001">
+                    claude-haiku-4-5 — Haiku 4.5
+                  </option>
+                </select>
+              </div>
+              <div class="field">
+                <label>CLAUDE.md Content</label>
+                <textarea
+                  id="init-claudemd"
+                  style="min-height: 180px"
+                ></textarea>
+              </div>
+              <div class="field">
+                <label style="margin-bottom: 8px">Create Directories</label>
+                <div style="display: flex; flex-direction: column; gap: 6px">
+                  <label class="checkbox-label"
+                    ><input type="checkbox" id="init-dir-rules" checked />
+                    <code>rules/</code> — coding standards</label
+                  >
+                  <label class="checkbox-label"
+                    ><input type="checkbox" id="init-dir-commands" checked />
+                    <code>commands/</code> — slash commands</label
+                  >
+                  <label class="checkbox-label"
+                    ><input type="checkbox" id="init-dir-skills" checked />
+                    <code>skills/</code> — reusable skills</label
+                  >
+                  <label class="checkbox-label"
+                    ><input type="checkbox" id="init-dir-workflows" />
+                    <code>workflows/</code> — multi-step workflows</label
+                  >
+                </div>
+              </div>
+              <div class="field">
+                <label class="checkbox-label"
+                  ><input type="checkbox" id="init-claudeignore" checked />
+                  Create <code>.claudeignore</code></label
+                >
+              </div>
+              <div class="save-bar">
+                <button id="init-run">Initialize Project</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Model -->
+        <section id="sec-model">
+          <div class="card">
+            <div class="card-header">Primary Model</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Active Model</label>
+                <select id="model-select">
+                  <option value="claude-opus-4-7">
+                    claude-opus-4-7 — Opus 4.7
+                  </option>
+                  <option value="claude-sonnet-4-6">
+                    claude-sonnet-4-6 — Sonnet 4.6
+                  </option>
+                  <option value="claude-haiku-4-5-20251001">
+                    claude-haiku-4-5 — Haiku 4.5
+                  </option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Small / Background Model</label>
+                <select id="small-model-select">
+                  <option value="">— same as primary —</option>
+                  <option value="claude-opus-4-7">
+                    claude-opus-4-7 — Opus 4.7
+                  </option>
+                  <option value="claude-sonnet-4-6">
+                    claude-sonnet-4-6 — Sonnet 4.6
+                  </option>
+                  <option value="claude-haiku-4-5-20251001">
+                    claude-haiku-4-5 — Haiku 4.5
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Effort</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Effort Level</label>
+                <select id="effort-level-select">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="xhigh">Extra High</option>
+                  <option value="max">Max</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Thinking</div>
+            <div class="card-body">
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Extended Thinking
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Always enable thinking mode across all sessions
+                    </div>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" id="thinking-toggle" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Show Thinking Summaries
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Display summaries of Claude's reasoning process
+                    </div>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" id="thinking-summaries-toggle" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="save-bar">
+                <button id="save-model">Save</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Environment Variables -->
+        <section id="sec-env">
+          <div class="card">
+            <div class="card-header">Environment Variables</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.5; margin-bottom: 8px">
+                Use <code>${VAR:-default}</code> syntax in values for
+                environment variable expansion.
+              </div>
+              <input
+                id="env-filter"
+                class="list-filter"
+                placeholder="Filter variables…"
+              />
+              <table style="margin-bottom: 12px">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="env-tbody"></tbody>
+              </table>
+              <div class="row">
+                <input
+                  id="env-key"
+                  placeholder="VARIABLE_NAME"
+                  style="flex: 1"
+                />
+                <input id="env-val" placeholder="value" style="flex: 2" />
+                <button id="env-add">Add</button>
+              </div>
+              <div class="save-bar"><button id="save-env">Save</button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Advanced -->
+        <section id="sec-advanced">
+          <div class="card">
+            <div class="card-header">Prompts</div>
+            <div class="card-body">
+              <div class="field">
+                <label>System Prompt (override)</label>
+                <textarea
+                  id="system-prompt"
+                  style="min-height: 120px"
+                ></textarea>
+              </div>
+              <div class="field">
+                <label>Append to System Prompt</label>
+                <textarea
+                  id="append-system-prompt"
+                  style="min-height: 120px"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Behaviour</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Default View Mode</label>
+                <select id="view-mode">
+                  <option value="">— default —</option>
+                  <option value="default">Default</option>
+                  <option value="verbose">Verbose</option>
+                  <option value="focus">Focus</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Default Shell</label>
+                <select id="default-shell">
+                  <option value="">— default —</option>
+                  <option value="bash">bash</option>
+                  <option value="powershell">powershell</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Response Language</label>
+                <input
+                  id="language"
+                  placeholder="e.g. japanese, spanish, french"
+                />
+              </div>
+              <div class="field">
+                <label>Output Style</label>
+                <input id="output-style" placeholder="e.g. Explanatory" />
+              </div>
+              <div class="field">
+                <label>Session Cleanup Period (days)</label>
+                <input
+                  id="cleanup-period-days"
+                  type="number"
+                  placeholder="30"
+                />
+              </div>
+              <div class="field">
+                <label>Auto Updates Channel</label>
+                <select id="auto-updates-channel">
+                  <option value="">— default —</option>
+                  <option value="latest">Latest</option>
+                  <option value="stable">Stable</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Include Git Instructions
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Add built-in git workflow guidance to system prompt
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="include-git-instructions"
+                      checked /><span class="toggle-slider"></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Respect .gitignore
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      @ file picker respects .gitignore rules
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="respect-gitignore"
+                      checked /><span class="toggle-slider"></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Fast Mode Per-Session Opt-In
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Require opt-in for fast mode each session
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input type="checkbox" id="fast-mode-per-session" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Prefers Reduced Motion
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Reduce or disable UI animations
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input type="checkbox" id="prefers-reduced-motion" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Limits</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Bash Timeout (ms)</label>
+                <input id="bash-timeout" type="number" placeholder="120000" />
+              </div>
+              <div class="field">
+                <label>Max Thinking Tokens</label>
+                <input
+                  id="max-thinking-tokens"
+                  type="number"
+                  placeholder="8000"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Attribution</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Commit Attribution</label>
+                <input
+                  id="attribution-commit"
+                  placeholder="Co-Authored-By: ..."
+                />
+              </div>
+              <div class="field">
+                <label>PR Attribution</label>
+                <input id="attribution-pr" placeholder="Generated with ..." />
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Available Models</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.6; margin-bottom: 10px">
+                Restrict which models users can select. Leave empty to allow
+                all.
+              </div>
+              <div class="tag-list" id="available-models-tags"></div>
+              <div class="row">
+                <input
+                  id="available-models-input"
+                  placeholder="e.g. claude-sonnet-4-6"
+                  style="flex: 1"
+                />
+                <button id="available-models-add">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Memory</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Auto Memory Directory</label>
+                <input
+                  id="auto-memory-directory"
+                  placeholder="~/.claude/memory"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Customization</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Status Line Command</label>
+                <div style="font-size: 11px; opacity: 0.55; margin-bottom: 6px">
+                  Shell command whose output is shown in the Claude Code status
+                  line.
+                </div>
+                <input id="status-line" placeholder="e.g. echo 'build ok'" />
+              </div>
+              <div class="field">
+                <label>File Suggestion Command</label>
+                <div style="font-size: 11px; opacity: 0.55; margin-bottom: 6px">
+                  Shell command for custom <code>@</code> file autocomplete
+                  suggestions.
+                </div>
+                <input id="file-suggestion" placeholder="e.g. fzf --select-1" />
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Worktree</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Symlink Directories</label>
+                <div class="tag-list" id="symlink-dirs-tags"></div>
+                <div class="row">
+                  <input
+                    id="symlink-dirs-input"
+                    placeholder="node_modules"
+                    style="flex: 1"
+                  />
+                  <button id="symlink-dirs-add">Add</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Sparse Paths</label>
+                <div class="tag-list" id="sparse-paths-tags"></div>
+                <div class="row">
+                  <input
+                    id="sparse-paths-input"
+                    placeholder="src/"
+                    style="flex: 1"
+                  />
+                  <button id="sparse-paths-add">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Company Announcements</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.6; margin-bottom: 10px">
+                Messages shown to users at startup.
+              </div>
+              <div class="tag-list" id="announcements-tags"></div>
+              <div class="row">
+                <input
+                  id="announcements-input"
+                  placeholder="Welcome to the team!"
+                  style="flex: 1"
+                />
+                <button id="announcements-add">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar" style="border: none; padding-top: 0; gap: 8px">
+            <button id="save-advanced">Save</button>
+            <button class="secondary" id="diff-advanced-btn">
+              Preview Changes
+            </button>
+            <button class="secondary" id="export-advanced-btn">
+              Export JSON
+            </button>
+            <button class="secondary" id="import-advanced-btn">
+              Import JSON
+            </button>
+          </div>
+        </section>
+
+        <!-- MCP Servers -->
+        <section id="sec-mcp">
+          <div class="card">
+            <div class="card-header">MCP Servers</div>
+            <div class="card-body" style="padding: 0">
+              <table id="mcp-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Command</th>
+                    <th>Args</th>
+                    <th>Enabled</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="mcp-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <button id="add-mcp-btn">+ Add Server</button>
+          <div id="mcp-add-form" class="inline-form" style="display: none">
+            <h3>New MCP Server</h3>
+            <div class="field">
+              <label>Name</label><input id="mcp-name" placeholder="my-server" />
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="mcp-type">
+                <option value="stdio">stdio</option>
+                <option value="sse">SSE</option>
+                <option value="http">HTTP</option>
+              </select>
+            </div>
+            <div class="field" id="mcp-cmd-field">
+              <label>Command</label><input id="mcp-cmd" placeholder="npx" />
+            </div>
+            <div class="field" id="mcp-args-field">
+              <label>Args (space separated)</label
+              ><input id="mcp-args" placeholder="-y @scope/package-mcp" />
+            </div>
+            <div class="field" id="mcp-url-field" style="display: none">
+              <label>URL</label><input id="mcp-url" placeholder="https://..." />
+            </div>
+            <div class="field" id="mcp-headers-field" style="display: none">
+              <label>Headers (optional)</label>
+              <table style="margin-bottom: 8px">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="mcp-headers-tbody"></tbody>
+              </table>
+              <div class="row">
+                <input
+                  id="mcp-header-key"
+                  placeholder="Authorization"
+                  style="flex: 1"
+                />
+                <input
+                  id="mcp-header-val"
+                  placeholder="Bearer token"
+                  style="flex: 2"
+                />
+                <button id="mcp-header-add" type="button">Add</button>
+              </div>
+              <div class="field" style="margin-top: 10px; margin-bottom: 0">
+                <label
+                  >Headers Helper
+                  <span style="font-weight: 400; opacity: 0.55"
+                    >— shell command for dynamic auth headers</span
+                  ></label
+                >
+                <input
+                  id="mcp-headers-helper"
+                  placeholder="e.g. my-auth-helper --format json"
+                />
+              </div>
+            </div>
+            <div class="field" id="mcp-oauth-field" style="display: none">
+              <label>OAuth</label>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 8px;
+                  margin-top: 6px;
+                "
+              >
+                <div class="field" style="margin: 0">
+                  <label>Client ID</label
+                  ><input id="mcp-oauth-client-id" placeholder="my-client-id" />
+                </div>
+                <div class="field" style="margin: 0">
+                  <label>Callback Port</label
+                  ><input
+                    id="mcp-oauth-callback-port"
+                    type="number"
+                    placeholder="8080"
+                  />
+                </div>
+                <div class="field" style="margin: 0; grid-column: 1/-1">
+                  <label>Auth Server Metadata URL</label
+                  ><input
+                    id="mcp-oauth-metadata-url"
+                    placeholder="https://.../.well-known/openid-configuration"
+                  />
+                </div>
+                <div class="field" style="margin: 0; grid-column: 1/-1">
+                  <label
+                    >Scopes
+                    <span style="font-weight: 400; opacity: 0.55"
+                      >(space separated)</span
+                    ></label
+                  ><input
+                    id="mcp-oauth-scopes"
+                    placeholder="openid profile email"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label
+                >Environment Variables
+                <span style="font-weight: 400; opacity: 0.55"
+                  >— use <code>${VAR:-default}</code> for expansion</span
+                ></label
+              >
+              <table style="margin-bottom: 8px">
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="mcp-env-tbody"></tbody>
+              </table>
+              <div class="row">
+                <input id="mcp-env-key" placeholder="API_KEY" style="flex: 1" />
+                <input id="mcp-env-val" placeholder="value" style="flex: 2" />
+                <button id="mcp-env-add" type="button">Add</button>
+              </div>
+            </div>
+            <div class="row">
+              <button id="mcp-add-confirm">Add Server</button>
+              <button class="secondary" id="mcp-add-cancel">Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Permissions -->
+        <section id="sec-permissions">
+          <div class="card">
+            <div class="card-header">Rule Syntax</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.55; margin-bottom: 8px">
+                Click an example to insert it into the active field.
+              </div>
+              <div class="hint-chips" id="perm-hint-chips">
+                <button class="hint-chip" data-val="Bash(*)">Bash(*)</button>
+                <button class="hint-chip" data-val="Bash(npm run *)">
+                  Bash(npm run *)
+                </button>
+                <button class="hint-chip" data-val="Read(.env)">
+                  Read(.env)
+                </button>
+                <button class="hint-chip" data-val="Write(src/**)">
+                  Write(src/**)
+                </button>
+                <button class="hint-chip" data-val="Edit(*.md)">
+                  Edit(*.md)
+                </button>
+                <button
+                  class="hint-chip"
+                  data-val="WebFetch(domain:example.com)"
+                >
+                  WebFetch(domain:*)
+                </button>
+                <button class="hint-chip" data-val="mcp__server__tool">
+                  mcp__server__tool
+                </button>
+                <button class="hint-chip" data-val="Agent(*)">Agent(*)</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Default Mode</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Permission Mode</label>
+                <select id="permissions-default-mode">
+                  <option value="">— default —</option>
+                  <option value="default">Default</option>
+                  <option value="acceptEdits">Accept Edits</option>
+                  <option value="plan">Plan</option>
+                  <option value="auto">Auto</option>
+                  <option value="dontAsk">Don't Ask</option>
+                  <option value="bypassPermissions">Bypass Permissions</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <input
+            id="perms-filter"
+            class="list-filter"
+            placeholder="Filter rules…"
+          />
+          <div class="card">
+            <div class="card-header">Allow</div>
+            <div class="card-body">
+              <div class="tag-list" id="allow-tags"></div>
+              <div class="row">
+                <input
+                  id="allow-input"
+                  placeholder="e.g. Bash(npm run *)"
+                  style="flex: 1"
+                />
+                <button id="allow-add">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Ask</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.6; margin-bottom: 10px">
+                Prompt for confirmation before allowing these tools (priority
+                between Allow and Deny).
+              </div>
+              <div class="tag-list" id="ask-tags"></div>
+              <div class="row">
+                <input
+                  id="ask-input"
+                  placeholder="e.g. Bash(sudo *)"
+                  style="flex: 1"
+                />
+                <button id="ask-add">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Deny</div>
+            <div class="card-body">
+              <div class="tag-list" id="deny-tags"></div>
+              <div class="row">
+                <input
+                  id="deny-input"
+                  placeholder="e.g. Edit(.env*)"
+                  style="flex: 1"
+                />
+                <button id="deny-add">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar" style="border: none; padding-top: 0; gap: 8px">
+            <button id="save-permissions">Save Permissions</button>
+            <button class="secondary" id="export-settings-btn">
+              Export JSON
+            </button>
+            <button class="secondary" id="import-settings-btn">
+              Import JSON
+            </button>
+          </div>
+        </section>
+
+        <!-- Hooks -->
+        <section id="sec-hooks">
+          <div class="card">
+            <div class="card-header">Configured Hooks</div>
+            <div class="card-body">
+              <input
+                id="hooks-filter"
+                class="list-filter"
+                placeholder="Filter by event or command…"
+              />
+              <div id="hooks-list"></div>
+            </div>
+          </div>
+          <button id="add-hook-btn">+ Add Hook</button>
+          <div id="hook-add-form" class="inline-form" style="display: none">
+            <h3>New Hook</h3>
+            <div class="field">
+              <label>Event</label>
+              <select id="hook-event">
+                <option>PreToolUse</option>
+                <option>PostToolUse</option>
+                <option>PostToolUseFailure</option>
+                <option>Stop</option>
+                <option>StopFailure</option>
+                <option>Notification</option>
+                <option>SessionStart</option>
+                <option>SessionEnd</option>
+                <option>UserPromptSubmit</option>
+                <option>PermissionRequest</option>
+                <option>PermissionDenied</option>
+                <option>SubagentStart</option>
+                <option>SubagentStop</option>
+                <option>TaskCreated</option>
+                <option>TaskCompleted</option>
+                <option>TeammateIdle</option>
+                <option>InstructionsLoaded</option>
+                <option>ConfigChange</option>
+                <option>CwdChanged</option>
+                <option>FileChanged</option>
+                <option>WorktreeCreate</option>
+                <option>WorktreeRemove</option>
+                <option>PreCompact</option>
+                <option>PostCompact</option>
+                <option>Elicitation</option>
+                <option>ElicitationResult</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Matcher (regex, optional)</label
+              ><input id="hook-matcher" placeholder="Edit|Write" />
+            </div>
+            <div class="field">
+              <label>Hook Type</label>
+              <select id="hook-type">
+                <option value="command">Command</option>
+                <option value="http">HTTP</option>
+                <option value="prompt">Prompt</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+            <div class="field" id="hook-command-field">
+              <label>Command</label>
+              <input id="hook-command" placeholder="npm run lint --silent" />
+              <div style="font-size: 10px; opacity: 0.5; margin-top: 5px">
+                Exit code: <code>0</code> = allow &nbsp;·&nbsp; <code>2</code> =
+                block the action &nbsp;·&nbsp; other = warn only
+              </div>
+            </div>
+            <div class="field" id="hook-url-field" style="display: none">
+              <label>URL</label
+              ><input id="hook-url" placeholder="https://..." />
+            </div>
+            <div class="field" id="hook-prompt-field" style="display: none">
+              <label>Prompt</label
+              ><input
+                id="hook-prompt"
+                placeholder="Summarize what just happened"
+              />
+            </div>
+            <div class="field" id="hook-agent-field" style="display: none">
+              <label>Agent</label
+              ><input id="hook-agent" placeholder="my-agent" />
+            </div>
+            <div class="field">
+              <label
+                >Condition (<code>if</code>)
+                <span style="font-weight: 400; opacity: 0.55"
+                  >— permission-syntax filter, optional</span
+                ></label
+              ><input id="hook-if" placeholder="e.g. Bash(npm *)" />
+            </div>
+            <div class="row">
+              <button id="hook-add-confirm">Add Hook</button>
+              <button class="secondary" id="hook-add-cancel">Cancel</button>
+            </div>
+          </div>
+          <div class="save-bar" style="border: none; padding-top: 12px">
+            <button id="save-hooks">Save Hooks</button>
+          </div>
+        </section>
+
+        <!-- CLAUDE.md -->
+        <section id="sec-claudeMd">
+          <div class="card">
+            <div class="card-header">CLAUDE.md</div>
+            <div class="card-body" style="padding: 0">
+              <div
+                id="claudemd-editor"
+                data-height="500px"
+                style="height: 500px; border-radius: var(--radius)"
+              ></div>
+            </div>
+          </div>
+          <div class="save-bar" style="border: none; padding-top: 8px">
+            <button id="save-claudemd">Save</button>
+          </div>
+        </section>
+
+        <!-- File sections -->
+        <section id="sec-rules">
+          <div class="card">
+            <div class="card-header">Rules</div>
+            <div class="card-body">
+              <div class="file-list" id="files-rules"></div>
+              <div style="margin-top: 12px">
+                <button class="add-file-btn" data-type="rules">
+                  + New Rule
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="inline-editor-rules"
+            style="display: none; margin-top: 12px"
+          ></div>
+        </section>
+        <section id="sec-commands">
+          <div class="card">
+            <div class="card-header">Commands</div>
+            <div class="card-body">
+              <div class="file-list" id="files-commands"></div>
+              <div style="margin-top: 12px">
+                <button class="add-file-btn" data-type="commands">
+                  + New Command
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="inline-editor-commands"
+            style="display: none; margin-top: 12px"
+          ></div>
+        </section>
+        <section id="sec-skills">
+          <div class="card">
+            <div class="card-header">Skills</div>
+            <div class="card-body">
+              <div class="file-list" id="files-skills"></div>
+              <div style="margin-top: 12px">
+                <button class="add-file-btn" data-type="skills">
+                  + New Skill
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="inline-editor-skills"
+            style="display: none; margin-top: 12px"
+          ></div>
+        </section>
+        <section id="sec-workflows">
+          <div class="card">
+            <div class="card-header">Workflows</div>
+            <div class="card-body">
+              <div class="file-list" id="files-workflows"></div>
+              <div style="margin-top: 12px">
+                <button class="add-file-btn" data-type="workflows">
+                  + New Workflow
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="inline-editor-workflows"
+            style="display: none; margin-top: 12px"
+          ></div>
+        </section>
+
+        <!-- .claudeignore -->
+        <section id="sec-claudeIgnore">
+          <div class="card">
+            <div class="card-header">.claudeignore</div>
+            <div class="card-body" style="padding: 0">
+              <div
+                id="claudeignore-editor"
+                data-height="300px"
+                style="height: 300px; border-radius: var(--radius)"
+              ></div>
+            </div>
+          </div>
+          <div class="save-bar" style="border: none; padding-top: 8px">
+            <button id="save-claudeignore">Save</button>
+          </div>
+        </section>
+
+        <!-- Memory -->
+        <section id="sec-memory">
+          <div class="card">
+            <div class="card-header">MEMORY.md</div>
+            <div class="card-body" style="padding: 0">
+              <div
+                id="memory-md-editor"
+                data-height="400px"
+                style="height: 400px; border-radius: var(--radius)"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="save-bar"
+            style="border: none; padding-top: 0; margin-top: 0; margin-bottom: 16px"
+          >
+            <button id="save-memory-md">Save</button>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              Global Memory Files
+              <span style="font-size: 11px; opacity: 0.6; font-weight: normal"
+                >~/.claude/memory/</span
+              >
+            </div>
+            <div class="card-body">
+              <div class="file-list" id="memory-files-list"></div>
+              <div class="empty" id="memory-files-empty" style="display: none">
+                No global memory files.
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              Project Memory Files
+              <span style="font-size: 11px; opacity: 0.6; font-weight: normal"
+                >~/.claude/projects/&lt;slug&gt;/memory/</span
+              >
+            </div>
+            <div class="card-body">
+              <div class="file-list" id="project-memory-files-list"></div>
+              <div
+                class="empty"
+                id="project-memory-files-empty"
+                style="display: none"
+              >
+                No project memory files.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Plans -->
+        <section id="sec-plans">
+          <div class="card">
+            <div class="card-header">
+              Plans
+              <span style="font-size: 11px; opacity: 0.6; font-weight: normal"
+                >~/.claude/plans/</span
+              >
+            </div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.6; margin-bottom: 10px">
+                Active Claude Code plans created during conversations.
+              </div>
+              <div class="file-list" id="plans-files-list"></div>
+              <div class="empty" id="plans-files-empty" style="display: none">
+                No plans.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Agents -->
+        <section id="sec-agents">
+          <div class="card">
+            <div class="card-header">Agents</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.6; margin-bottom: 10px">
+                Sub-agents with their own tool sets, models, and permission
+                modes. Stored in <code>.claude/agents/*.md</code>.
+              </div>
+              <div class="file-list" id="files-agents"></div>
+              <div style="margin-top: 12px">
+                <button id="new-agent-btn">+ New Agent</button>
+              </div>
+            </div>
+          </div>
+          <div
+            id="inline-editor-agents"
+            style="display: none; margin-top: 12px"
+          ></div>
+          <div id="agent-create-form" class="inline-form" style="display: none">
+            <h3>New Agent</h3>
+            <div
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px"
+            >
+              <div class="field">
+                <label>Name</label
+                ><input id="agent-name" placeholder="my-agent" />
+              </div>
+              <div class="field">
+                <label>Description</label
+                ><input
+                  id="agent-description"
+                  placeholder="What this agent does"
+                />
+              </div>
+              <div class="field">
+                <label>Model</label>
+                <select id="agent-model">
+                  <option value="">— inherit —</option>
+                  <option value="claude-opus-4-7">
+                    claude-opus-4-7 — Opus 4.7
+                  </option>
+                  <option value="claude-sonnet-4-6">
+                    claude-sonnet-4-6 — Sonnet 4.6
+                  </option>
+                  <option value="claude-haiku-4-5-20251001">
+                    claude-haiku-4-5 — Haiku 4.5
+                  </option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Permission Mode</label>
+                <select id="agent-permission-mode">
+                  <option value="">— inherit —</option>
+                  <option value="default">Default</option>
+                  <option value="acceptEdits">Accept Edits</option>
+                  <option value="auto">Auto</option>
+                  <option value="bypassPermissions">Bypass Permissions</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Max Turns</label
+                ><input id="agent-max-turns" type="number" placeholder="10" />
+              </div>
+              <div class="field">
+                <label>Effort Level</label>
+                <select id="agent-effort">
+                  <option value="">— inherit —</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="xhigh">XHigh</option>
+                  <option value="max">Max</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Isolation</label>
+                <select id="agent-isolation">
+                  <option value="">— none —</option>
+                  <option value="worktree">Worktree</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Color</label
+                ><input id="agent-color" placeholder="e.g. blue, #ff6b35" />
+              </div>
+              <div
+                class="field"
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <div>
+                  <div style="font-size: 12px; font-weight: 500">
+                    Run in Background
+                  </div>
+                  <div style="font-size: 11px; opacity: 0.55">
+                    Start agent without waiting for completion
+                  </div>
+                </div>
+                <label class="toggle"
+                  ><input type="checkbox" id="agent-background" /><span
+                    class="toggle-slider"
+                  ></span
+                ></label>
+              </div>
+            </div>
+            <div class="field">
+              <label>Skills (comma or space separated names)</label>
+              <input id="agent-skills" placeholder="my-skill another-skill" />
+            </div>
+            <div class="field">
+              <label>MCP Servers (comma or space separated names)</label>
+              <input
+                id="agent-mcp-servers"
+                placeholder="my-server another-server"
+              />
+            </div>
+            <div class="field">
+              <label>Allowed Tools (space or comma separated)</label>
+              <input id="agent-tools" placeholder="Bash Read Write Edit Glob" />
+            </div>
+            <div class="field">
+              <label>Disallowed Tools</label>
+              <input
+                id="agent-disallowed-tools"
+                placeholder="WebFetch WebSearch"
+              />
+            </div>
+            <div class="field">
+              <label>Initial Instructions</label>
+              <textarea
+                id="agent-instructions"
+                style="min-height: 100px"
+                placeholder="Describe what this agent should do..."
+              ></textarea>
+            </div>
+            <div class="row">
+              <button id="agent-create-confirm">Create Agent</button>
+              <button class="secondary" id="agent-create-cancel">Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sandbox -->
+        <section id="sec-sandbox">
+          <div class="card">
+            <div class="card-header">Sandbox</div>
+            <div class="card-body">
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Enable Sandbox
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Run commands in an isolated sandbox environment
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input type="checkbox" id="sandbox-enabled" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <label>Excluded Commands (not sandboxed)</label>
+                <div class="tag-list" id="sandbox-excluded-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-excluded-input"
+                    placeholder="git"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-excluded-add">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Filesystem</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Allow Write</label>
+                <div class="tag-list" id="sandbox-allow-write-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-allow-write-input"
+                    placeholder="/tmp/**"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-allow-write-add">Add</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Deny Write</label>
+                <div class="tag-list" id="sandbox-deny-write-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-deny-write-input"
+                    placeholder="/etc/**"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-deny-write-add">Add</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Allow Read</label>
+                <div class="tag-list" id="sandbox-allow-read-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-allow-read-input"
+                    placeholder="/usr/share/**"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-allow-read-add">Add</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Deny Read</label>
+                <div class="tag-list" id="sandbox-deny-read-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-deny-read-input"
+                    placeholder="~/.ssh/**"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-deny-read-add">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Network</div>
+            <div class="card-body">
+              <div class="field">
+                <label>Allowed Domains</label>
+                <div class="tag-list" id="sandbox-allowed-domains-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-allowed-domains-input"
+                    placeholder="api.example.com"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-allowed-domains-add">Add</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Denied Domains</label>
+                <div class="tag-list" id="sandbox-denied-domains-tags"></div>
+                <div class="row">
+                  <input
+                    id="sandbox-denied-domains-input"
+                    placeholder="*.tracking.com"
+                    style="flex: 1"
+                  />
+                  <button id="sandbox-denied-domains-add">Add</button>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Allow Local Binding
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Allow binding to local network ports
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="sandbox-allow-local-binding" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="save-bar" style="border: none; padding-top: 0">
+            <button id="save-sandbox">Save Sandbox</button>
+          </div>
+        </section>
+
+        <!-- App Config -->
+        <section id="sec-appconfig">
+          <div class="card" id="account-card">
+            <div class="card-header">Account</div>
+            <div class="card-body" id="account-body">
+              <div class="empty">Not logged in.</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">App Config (~/.claude.json)</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.6; margin-bottom: 14px">
+                Global user preferences stored in <code>~/.claude.json</code>.
+                These apply to all projects.
+              </div>
+              <div class="field">
+                <label>Editor Mode</label>
+                <select id="appconfig-editor-mode">
+                  <option value="">— default —</option>
+                  <option value="default">Default</option>
+                  <option value="vim">Vim</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Auto Scroll
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Automatically scroll to the latest output
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input type="checkbox" id="appconfig-auto-scroll" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Show Turn Duration
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Display how long each turn took
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="appconfig-show-turn-duration" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Terminal Progress Bar
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Show progress bar in terminal output
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="appconfig-terminal-progress" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Auto Connect IDE
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Automatically connect to IDE when available
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="appconfig-auto-connect-ide" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="field">
+                <div class="row" style="justify-content: space-between">
+                  <div>
+                    <div style="font-size: 13px; font-weight: 500">
+                      Auto Install IDE Extension
+                    </div>
+                    <div
+                      style="font-size: 11px; opacity: 0.55; margin-top: 2px"
+                    >
+                      Automatically install the Claude Code IDE extension
+                    </div>
+                  </div>
+                  <label class="toggle"
+                    ><input
+                      type="checkbox"
+                      id="appconfig-auto-install-ext" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                </div>
+              </div>
+              <div class="save-bar">
+                <button id="save-appconfig">Save</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Plugins</div>
+            <div class="card-body">
+              <div style="font-size: 11px; opacity: 0.55; margin-bottom: 10px">
+                Toggle installed plugins on or off.
+              </div>
+              <div id="plugin-list">
+                <div class="empty">No plugins installed.</div>
+              </div>
+              <div class="field" style="margin-top: 14px">
+                <label>Extra Marketplaces</label>
+                <div style="font-size: 11px; opacity: 0.55; margin-bottom: 6px">
+                  Additional plugin marketplace URLs.
+                </div>
+                <div class="tag-list" id="marketplace-tags"></div>
+                <div class="row">
+                  <input
+                    id="marketplace-input"
+                    placeholder="https://marketplace.example.com"
+                    style="flex: 1"
+                  />
+                  <button id="marketplace-add">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <!-- .content -->
     </div>
-    <div class="content">
+    <!-- .main-area -->
 
-      <!-- Dashboard -->
-      <section id="sec-dashboard" class="active">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px" id="dash-grid"></div>
-      </section>
+    <!-- Sidebar (right) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Claude Code</h1>
+        <div class="scope-switch">
+          <button class="scope-tab active" data-scope="project">Project</button>
+          <button class="scope-tab" data-scope="global">Global</button>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-section="dashboard">
+          <span class="nav-icon">🏠</span> Dashboard
+        </button>
+        <button class="nav-btn project-only" data-section="init" id="nav-init">
+          <span class="nav-icon">🚀</span> Initialize
+        </button>
+        <div class="nav-group-label">Settings</div>
+        <button class="nav-btn" data-section="model">
+          <span class="nav-icon">⚙</span> Model
+        </button>
+        <button class="nav-btn" data-section="env">
+          <span class="nav-icon">🌿</span> Environment
+        </button>
+        <button class="nav-btn" data-section="advanced">
+          <span class="nav-icon">🔧</span> Advanced
+        </button>
+        <button class="nav-btn" data-section="mcp">
+          <span class="nav-icon">⚡</span> MCP Servers
+        </button>
+        <button class="nav-btn" data-section="permissions">
+          <span class="nav-icon">🔒</span> Permissions
+        </button>
+        <button class="nav-btn" data-section="hooks">
+          <span class="nav-icon">🪝</span> Hooks
+        </button>
+        <button class="nav-btn" data-section="sandbox">
+          <span class="nav-icon">📦</span> Sandbox
+        </button>
+        <button class="nav-btn" data-section="appconfig">
+          <span class="nav-icon">👤</span> App Config
+        </button>
+        <div class="nav-group-label project-only">Project Files</div>
+        <button class="nav-btn project-only" data-section="claudeMd">
+          <span class="nav-icon">📄</span> CLAUDE.md
+        </button>
+        <button class="nav-btn project-only" data-section="claudeIgnore">
+          <span class="nav-icon">🚫</span> .claudeignore
+        </button>
+        <button class="nav-btn project-only" data-section="rules">
+          <span class="nav-icon">📏</span> Rules
+        </button>
+        <button class="nav-btn project-only" data-section="commands">
+          <span class="nav-icon">💬</span> Commands
+        </button>
+        <button class="nav-btn project-only" data-section="skills">
+          <span class="nav-icon">🛠</span> Skills
+        </button>
+        <button class="nav-btn project-only" data-section="workflows">
+          <span class="nav-icon">🔄</span> Workflows
+        </button>
+        <button class="nav-btn project-only" data-section="agents">
+          <span class="nav-icon">🤖</span> Agents
+        </button>
+        <div class="nav-group-label">Memory</div>
+        <button class="nav-btn" data-section="memory">
+          <span class="nav-icon">🧠</span> Memory
+        </button>
+        <button class="nav-btn" data-section="plans">
+          <span class="nav-icon">📋</span> Plans
+        </button>
+      </nav>
+    </aside>
 
-      <!-- Initialize -->
-      <section id="sec-init">
-        <div class="card">
-          <div class="card-header">Initialize Claude Code</div>
-          <div class="card-body">
-            <div class="init-banner" id="init-already" style="display:none">
-              <span class="init-banner-icon">✅</span>
-              <div>
-                <strong>Already initialized</strong>
-                <div style="opacity:0.6;font-size:12px;margin-top:2px">Running this will add any missing files without overwriting existing ones.</div>
-              </div>
-            </div>
-            <div class="field">
-              <label>Model</label>
-              <select id="init-model">
-                <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Sonnet 4.6</option>
-                <option value="claude-opus-4-7">claude-opus-4-7 — Opus 4.7</option>
-                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Haiku 4.5</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>CLAUDE.md Content</label>
-              <textarea id="init-claudemd" style="min-height:180px"></textarea>
-            </div>
-            <div class="field">
-              <label style="margin-bottom:8px">Create Directories</label>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <label class="checkbox-label"><input type="checkbox" id="init-dir-rules" checked> <code>rules/</code> — coding standards</label>
-                <label class="checkbox-label"><input type="checkbox" id="init-dir-commands" checked> <code>commands/</code> — slash commands</label>
-                <label class="checkbox-label"><input type="checkbox" id="init-dir-skills" checked> <code>skills/</code> — reusable skills</label>
-                <label class="checkbox-label"><input type="checkbox" id="init-dir-workflows"> <code>workflows/</code> — multi-step workflows</label>
-              </div>
-            </div>
-            <div class="field">
-              <label class="checkbox-label"><input type="checkbox" id="init-claudeignore" checked> Create <code>.claudeignore</code></label>
-            </div>
-            <div class="save-bar">
-              <button id="init-run">Initialize Project</button>
-            </div>
-          </div>
-        </div>
-      </section>
+    <div class="toast-container" id="toast-container"></div>
 
-      <!-- Model -->
-      <section id="sec-model">
-        <div class="card">
-          <div class="card-header">Primary Model</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Active Model</label>
-              <select id="model-select">
-                <option value="claude-opus-4-7">claude-opus-4-7 — Opus 4.7</option>
-                <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Sonnet 4.6</option>
-                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Haiku 4.5</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Small / Background Model</label>
-              <select id="small-model-select">
-                <option value="">— same as primary —</option>
-                <option value="claude-opus-4-7">claude-opus-4-7 — Opus 4.7</option>
-                <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Sonnet 4.6</option>
-                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Haiku 4.5</option>
-              </select>
-            </div>
+    <!-- Diff overlay -->
+    <div id="diff-overlay">
+      <div id="diff-box">
+        <h3>Preview Changes</h3>
+        <div id="diff-scroll">
+          <div id="diff-content"></div>
+          <div id="diff-empty" class="empty" style="display: none">
+            No changes detected.
           </div>
         </div>
-        <div class="card">
-          <div class="card-header">Effort</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Effort Level</label>
-              <select id="effort-level-select">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="xhigh">Extra High</option>
-                <option value="max">Max</option>
-              </select>
-            </div>
-          </div>
+        <div class="row" style="margin-top: 12px; flex-shrink: 0">
+          <button id="diff-save">Save</button>
+          <button class="secondary" id="diff-cancel">Cancel</button>
         </div>
-        <div class="card">
-          <div class="card-header">Thinking</div>
-          <div class="card-body">
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Extended Thinking</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Always enable thinking mode across all sessions</div>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox" id="thinking-toggle">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Show Thinking Summaries</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Display summaries of Claude's reasoning process</div>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox" id="thinking-summaries-toggle">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
-            <div class="save-bar">
-              <button id="save-model">Save</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Environment Variables -->
-      <section id="sec-env">
-        <div class="card">
-          <div class="card-header">Environment Variables</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.5;margin-bottom:8px">Use <code>${VAR:-default}</code> syntax in values for environment variable expansion.</div>
-            <input id="env-filter" class="list-filter" placeholder="Filter variables…">
-            <table style="margin-bottom:12px">
-              <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
-              <tbody id="env-tbody"></tbody>
-            </table>
-            <div class="row">
-              <input id="env-key" placeholder="VARIABLE_NAME" style="flex:1">
-              <input id="env-val" placeholder="value" style="flex:2">
-              <button id="env-add">Add</button>
-            </div>
-            <div class="save-bar"><button id="save-env">Save</button></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Advanced -->
-      <section id="sec-advanced">
-        <div class="card">
-          <div class="card-header">Prompts</div>
-          <div class="card-body">
-            <div class="field">
-              <label>System Prompt (override)</label>
-              <textarea id="system-prompt" style="min-height:120px"></textarea>
-            </div>
-            <div class="field">
-              <label>Append to System Prompt</label>
-              <textarea id="append-system-prompt" style="min-height:120px"></textarea>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Behaviour</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Default View Mode</label>
-              <select id="view-mode">
-                <option value="">— default —</option>
-                <option value="default">Default</option>
-                <option value="verbose">Verbose</option>
-                <option value="focus">Focus</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Default Shell</label>
-              <select id="default-shell">
-                <option value="">— default —</option>
-                <option value="bash">bash</option>
-                <option value="powershell">powershell</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Response Language</label>
-              <input id="language" placeholder="e.g. japanese, spanish, french">
-            </div>
-            <div class="field">
-              <label>Output Style</label>
-              <input id="output-style" placeholder="e.g. Explanatory">
-            </div>
-            <div class="field">
-              <label>Session Cleanup Period (days)</label>
-              <input id="cleanup-period-days" type="number" placeholder="30">
-            </div>
-            <div class="field">
-              <label>Auto Updates Channel</label>
-              <select id="auto-updates-channel">
-                <option value="">— default —</option>
-                <option value="latest">Latest</option>
-                <option value="stable">Stable</option>
-              </select>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Include Git Instructions</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Add built-in git workflow guidance to system prompt</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="include-git-instructions" checked><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Respect .gitignore</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">@ file picker respects .gitignore rules</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="respect-gitignore" checked><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Fast Mode Per-Session Opt-In</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Require opt-in for fast mode each session</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="fast-mode-per-session"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Prefers Reduced Motion</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Reduce or disable UI animations</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="prefers-reduced-motion"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Limits</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Bash Timeout (ms)</label>
-              <input id="bash-timeout" type="number" placeholder="120000">
-            </div>
-            <div class="field">
-              <label>Max Thinking Tokens</label>
-              <input id="max-thinking-tokens" type="number" placeholder="8000">
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Attribution</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Commit Attribution</label>
-              <input id="attribution-commit" placeholder="Co-Authored-By: ...">
-            </div>
-            <div class="field">
-              <label>PR Attribution</label>
-              <input id="attribution-pr" placeholder="Generated with ...">
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Available Models</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Restrict which models users can select. Leave empty to allow all.</div>
-            <div class="tag-list" id="available-models-tags"></div>
-            <div class="row">
-              <input id="available-models-input" placeholder="e.g. claude-sonnet-4-6" style="flex:1">
-              <button id="available-models-add">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Memory</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Auto Memory Directory</label>
-              <input id="auto-memory-directory" placeholder="~/.claude/memory">
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Customization</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Status Line Command</label>
-              <div style="font-size:11px;opacity:0.55;margin-bottom:6px">Shell command whose output is shown in the Claude Code status line.</div>
-              <input id="status-line" placeholder="e.g. echo 'build ok'">
-            </div>
-            <div class="field">
-              <label>File Suggestion Command</label>
-              <div style="font-size:11px;opacity:0.55;margin-bottom:6px">Shell command for custom <code>@</code> file autocomplete suggestions.</div>
-              <input id="file-suggestion" placeholder="e.g. fzf --select-1">
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Worktree</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Symlink Directories</label>
-              <div class="tag-list" id="symlink-dirs-tags"></div>
-              <div class="row">
-                <input id="symlink-dirs-input" placeholder="node_modules" style="flex:1">
-                <button id="symlink-dirs-add">Add</button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Sparse Paths</label>
-              <div class="tag-list" id="sparse-paths-tags"></div>
-              <div class="row">
-                <input id="sparse-paths-input" placeholder="src/" style="flex:1">
-                <button id="sparse-paths-add">Add</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Company Announcements</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Messages shown to users at startup.</div>
-            <div class="tag-list" id="announcements-tags"></div>
-            <div class="row">
-              <input id="announcements-input" placeholder="Welcome to the team!" style="flex:1">
-              <button id="announcements-add">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:0;gap:8px">
-          <button id="save-advanced">Save</button>
-          <button class="secondary" id="diff-advanced-btn">Preview Changes</button>
-          <button class="secondary" id="export-advanced-btn">Export JSON</button>
-          <button class="secondary" id="import-advanced-btn">Import JSON</button>
-        </div>
-      </section>
-
-      <!-- MCP Servers -->
-      <section id="sec-mcp">
-        <div class="card">
-          <div class="card-header">MCP Servers</div>
-          <div class="card-body" style="padding:0">
-            <table id="mcp-table">
-              <thead>
-                <tr><th>Name</th><th>Command</th><th>Args</th><th>Enabled</th><th></th></tr>
-              </thead>
-              <tbody id="mcp-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-        <button id="add-mcp-btn">+ Add Server</button>
-        <div id="mcp-add-form" class="inline-form" style="display:none">
-          <h3>New MCP Server</h3>
-          <div class="field"><label>Name</label><input id="mcp-name" placeholder="my-server"></div>
-          <div class="field">
-            <label>Type</label>
-            <select id="mcp-type">
-              <option value="stdio">stdio</option>
-              <option value="sse">SSE</option>
-              <option value="http">HTTP</option>
-            </select>
-          </div>
-          <div class="field" id="mcp-cmd-field"><label>Command</label><input id="mcp-cmd" placeholder="npx"></div>
-          <div class="field" id="mcp-args-field"><label>Args (space separated)</label><input id="mcp-args" placeholder="-y @scope/package-mcp"></div>
-          <div class="field" id="mcp-url-field" style="display:none"><label>URL</label><input id="mcp-url" placeholder="https://..."></div>
-          <div class="field" id="mcp-headers-field" style="display:none">
-            <label>Headers (optional)</label>
-            <table style="margin-bottom:8px">
-              <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
-              <tbody id="mcp-headers-tbody"></tbody>
-            </table>
-            <div class="row">
-              <input id="mcp-header-key" placeholder="Authorization" style="flex:1">
-              <input id="mcp-header-val" placeholder="Bearer token" style="flex:2">
-              <button id="mcp-header-add" type="button">Add</button>
-            </div>
-            <div class="field" style="margin-top:10px;margin-bottom:0">
-              <label>Headers Helper <span style="font-weight:400;opacity:0.55">— shell command for dynamic auth headers</span></label>
-              <input id="mcp-headers-helper" placeholder="e.g. my-auth-helper --format json">
-            </div>
-          </div>
-          <div class="field" id="mcp-oauth-field" style="display:none">
-            <label>OAuth</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
-              <div class="field" style="margin:0"><label>Client ID</label><input id="mcp-oauth-client-id" placeholder="my-client-id"></div>
-              <div class="field" style="margin:0"><label>Callback Port</label><input id="mcp-oauth-callback-port" type="number" placeholder="8080"></div>
-              <div class="field" style="margin:0;grid-column:1/-1"><label>Auth Server Metadata URL</label><input id="mcp-oauth-metadata-url" placeholder="https://.../.well-known/openid-configuration"></div>
-              <div class="field" style="margin:0;grid-column:1/-1"><label>Scopes <span style="font-weight:400;opacity:0.55">(space separated)</span></label><input id="mcp-oauth-scopes" placeholder="openid profile email"></div>
-            </div>
-          </div>
-          <div class="field">
-            <label>Environment Variables <span style="font-weight:400;opacity:0.55">— use <code>${VAR:-default}</code> for expansion</span></label>
-            <table style="margin-bottom:8px">
-              <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
-              <tbody id="mcp-env-tbody"></tbody>
-            </table>
-            <div class="row">
-              <input id="mcp-env-key" placeholder="API_KEY" style="flex:1">
-              <input id="mcp-env-val" placeholder="value" style="flex:2">
-              <button id="mcp-env-add" type="button">Add</button>
-            </div>
-          </div>
-          <div class="row">
-            <button id="mcp-add-confirm">Add Server</button>
-            <button class="secondary" id="mcp-add-cancel">Cancel</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Permissions -->
-      <section id="sec-permissions">
-        <div class="card">
-          <div class="card-header">Rule Syntax</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.55;margin-bottom:8px">Click an example to insert it into the active field.</div>
-            <div class="hint-chips" id="perm-hint-chips">
-              <button class="hint-chip" data-val="Bash(*)">Bash(*)</button>
-              <button class="hint-chip" data-val="Bash(npm run *)">Bash(npm run *)</button>
-              <button class="hint-chip" data-val="Read(.env)">Read(.env)</button>
-              <button class="hint-chip" data-val="Write(src/**)">Write(src/**)</button>
-              <button class="hint-chip" data-val="Edit(*.md)">Edit(*.md)</button>
-              <button class="hint-chip" data-val="WebFetch(domain:example.com)">WebFetch(domain:*)</button>
-              <button class="hint-chip" data-val="mcp__server__tool">mcp__server__tool</button>
-              <button class="hint-chip" data-val="Agent(*)">Agent(*)</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Default Mode</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Permission Mode</label>
-              <select id="permissions-default-mode">
-                <option value="">— default —</option>
-                <option value="default">Default</option>
-                <option value="acceptEdits">Accept Edits</option>
-                <option value="plan">Plan</option>
-                <option value="auto">Auto</option>
-                <option value="dontAsk">Don't Ask</option>
-                <option value="bypassPermissions">Bypass Permissions</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <input id="perms-filter" class="list-filter" placeholder="Filter rules…">
-        <div class="card">
-          <div class="card-header">Allow</div>
-          <div class="card-body">
-            <div class="tag-list" id="allow-tags"></div>
-            <div class="row">
-              <input id="allow-input" placeholder="e.g. Bash(npm run *)" style="flex:1">
-              <button id="allow-add">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Ask</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Prompt for confirmation before allowing these tools (priority between Allow and Deny).</div>
-            <div class="tag-list" id="ask-tags"></div>
-            <div class="row">
-              <input id="ask-input" placeholder="e.g. Bash(sudo *)" style="flex:1">
-              <button id="ask-add">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Deny</div>
-          <div class="card-body">
-            <div class="tag-list" id="deny-tags"></div>
-            <div class="row">
-              <input id="deny-input" placeholder="e.g. Edit(.env*)" style="flex:1">
-              <button id="deny-add">Add</button>
-            </div>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:0;gap:8px">
-          <button id="save-permissions">Save Permissions</button>
-          <button class="secondary" id="export-settings-btn">Export JSON</button>
-          <button class="secondary" id="import-settings-btn">Import JSON</button>
-        </div>
-      </section>
-
-      <!-- Hooks -->
-      <section id="sec-hooks">
-        <div class="card">
-          <div class="card-header">Configured Hooks</div>
-          <div class="card-body">
-            <input id="hooks-filter" class="list-filter" placeholder="Filter by event or command…">
-            <div id="hooks-list"></div>
-          </div>
-        </div>
-        <button id="add-hook-btn">+ Add Hook</button>
-        <div id="hook-add-form" class="inline-form" style="display:none">
-          <h3>New Hook</h3>
-          <div class="field">
-            <label>Event</label>
-            <select id="hook-event">
-              <option>PreToolUse</option>
-              <option>PostToolUse</option>
-              <option>PostToolUseFailure</option>
-              <option>Stop</option>
-              <option>StopFailure</option>
-              <option>Notification</option>
-              <option>SessionStart</option>
-              <option>SessionEnd</option>
-              <option>UserPromptSubmit</option>
-              <option>PermissionRequest</option>
-              <option>PermissionDenied</option>
-              <option>SubagentStart</option>
-              <option>SubagentStop</option>
-              <option>TaskCreated</option>
-              <option>TaskCompleted</option>
-              <option>TeammateIdle</option>
-              <option>InstructionsLoaded</option>
-              <option>ConfigChange</option>
-              <option>CwdChanged</option>
-              <option>FileChanged</option>
-              <option>WorktreeCreate</option>
-              <option>WorktreeRemove</option>
-              <option>PreCompact</option>
-              <option>PostCompact</option>
-              <option>Elicitation</option>
-              <option>ElicitationResult</option>
-            </select>
-          </div>
-          <div class="field"><label>Matcher (regex, optional)</label><input id="hook-matcher" placeholder="Edit|Write"></div>
-          <div class="field">
-            <label>Hook Type</label>
-            <select id="hook-type">
-              <option value="command">Command</option>
-              <option value="http">HTTP</option>
-              <option value="prompt">Prompt</option>
-              <option value="agent">Agent</option>
-            </select>
-          </div>
-          <div class="field" id="hook-command-field">
-            <label>Command</label>
-            <input id="hook-command" placeholder="npm run lint --silent">
-            <div style="font-size:10px;opacity:0.5;margin-top:5px">Exit code: <code>0</code> = allow &nbsp;·&nbsp; <code>2</code> = block the action &nbsp;·&nbsp; other = warn only</div>
-          </div>
-          <div class="field" id="hook-url-field" style="display:none"><label>URL</label><input id="hook-url" placeholder="https://..."></div>
-          <div class="field" id="hook-prompt-field" style="display:none"><label>Prompt</label><input id="hook-prompt" placeholder="Summarize what just happened"></div>
-          <div class="field" id="hook-agent-field" style="display:none"><label>Agent</label><input id="hook-agent" placeholder="my-agent"></div>
-          <div class="field"><label>Condition (<code>if</code>) <span style="font-weight:400;opacity:0.55">— permission-syntax filter, optional</span></label><input id="hook-if" placeholder="e.g. Bash(npm *)"></div>
-          <div class="row">
-            <button id="hook-add-confirm">Add Hook</button>
-            <button class="secondary" id="hook-add-cancel">Cancel</button>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:12px">
-          <button id="save-hooks">Save Hooks</button>
-        </div>
-      </section>
-
-      <!-- CLAUDE.md -->
-      <section id="sec-claudeMd">
-        <div class="card">
-          <div class="card-header">CLAUDE.md</div>
-          <div class="card-body" style="padding:0">
-            <div id="claudemd-editor" data-height="500px" style="height:500px;border-radius:var(--radius)"></div>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:8px">
-          <button id="save-claudemd">Save</button>
-        </div>
-      </section>
-
-      <!-- File sections -->
-      <section id="sec-rules">
-        <div class="card">
-          <div class="card-header">Rules</div>
-          <div class="card-body">
-            <div class="file-list" id="files-rules"></div>
-            <div style="margin-top:12px"><button class="add-file-btn" data-type="rules">+ New Rule</button></div>
-          </div>
-        </div>
-        <div id="inline-editor-rules" style="display:none;margin-top:12px"></div>
-      </section>
-      <section id="sec-commands">
-        <div class="card">
-          <div class="card-header">Commands</div>
-          <div class="card-body">
-            <div class="file-list" id="files-commands"></div>
-            <div style="margin-top:12px"><button class="add-file-btn" data-type="commands">+ New Command</button></div>
-          </div>
-        </div>
-        <div id="inline-editor-commands" style="display:none;margin-top:12px"></div>
-      </section>
-      <section id="sec-skills">
-        <div class="card">
-          <div class="card-header">Skills</div>
-          <div class="card-body">
-            <div class="file-list" id="files-skills"></div>
-            <div style="margin-top:12px"><button class="add-file-btn" data-type="skills">+ New Skill</button></div>
-          </div>
-        </div>
-        <div id="inline-editor-skills" style="display:none;margin-top:12px"></div>
-      </section>
-      <section id="sec-workflows">
-        <div class="card">
-          <div class="card-header">Workflows</div>
-          <div class="card-body">
-            <div class="file-list" id="files-workflows"></div>
-            <div style="margin-top:12px"><button class="add-file-btn" data-type="workflows">+ New Workflow</button></div>
-          </div>
-        </div>
-        <div id="inline-editor-workflows" style="display:none;margin-top:12px"></div>
-      </section>
-
-      <!-- .claudeignore -->
-      <section id="sec-claudeIgnore">
-        <div class="card">
-          <div class="card-header">.claudeignore</div>
-          <div class="card-body" style="padding:0">
-            <div id="claudeignore-editor" data-height="300px" style="height:300px;border-radius:var(--radius)"></div>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:8px">
-          <button id="save-claudeignore">Save</button>
-        </div>
-      </section>
-
-      <!-- Memory -->
-      <section id="sec-memory">
-        <div class="card">
-          <div class="card-header">MEMORY.md</div>
-          <div class="card-body" style="padding:0">
-            <div id="memory-md-editor" data-height="400px" style="height:400px;border-radius:var(--radius)"></div>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:8px">
-          <button id="save-memory-md">Save</button>
-        </div>
-        <div class="card">
-          <div class="card-header">Global Memory Files <span style="font-size:11px;opacity:0.6;font-weight:normal">~/.claude/memory/</span></div>
-          <div class="card-body">
-            <div class="file-list" id="memory-files-list"></div>
-            <div class="empty" id="memory-files-empty" style="display:none">No global memory files.</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Project Memory Files <span style="font-size:11px;opacity:0.6;font-weight:normal">~/.claude/projects/&lt;slug&gt;/memory/</span></div>
-          <div class="card-body">
-            <div class="file-list" id="project-memory-files-list"></div>
-            <div class="empty" id="project-memory-files-empty" style="display:none">No project memory files.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Plans -->
-      <section id="sec-plans">
-        <div class="card">
-          <div class="card-header">Plans <span style="font-size:11px;opacity:0.6;font-weight:normal">~/.claude/plans/</span></div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Active Claude Code plans created during conversations.</div>
-            <div class="file-list" id="plans-files-list"></div>
-            <div class="empty" id="plans-files-empty" style="display:none">No plans.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Agents -->
-      <section id="sec-agents">
-        <div class="card">
-          <div class="card-header">Agents</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Sub-agents with their own tool sets, models, and permission modes. Stored in <code>.claude/agents/*.md</code>.</div>
-            <div class="file-list" id="files-agents"></div>
-            <div style="margin-top:12px"><button id="new-agent-btn">+ New Agent</button></div>
-          </div>
-        </div>
-        <div id="inline-editor-agents" style="display:none;margin-top:12px"></div>
-        <div id="agent-create-form" class="inline-form" style="display:none">
-          <h3>New Agent</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="field"><label>Name</label><input id="agent-name" placeholder="my-agent"></div>
-            <div class="field"><label>Description</label><input id="agent-description" placeholder="What this agent does"></div>
-            <div class="field">
-              <label>Model</label>
-              <select id="agent-model">
-                <option value="">— inherit —</option>
-                <option value="claude-opus-4-7">claude-opus-4-7 — Opus 4.7</option>
-                <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Sonnet 4.6</option>
-                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Haiku 4.5</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Permission Mode</label>
-              <select id="agent-permission-mode">
-                <option value="">— inherit —</option>
-                <option value="default">Default</option>
-                <option value="acceptEdits">Accept Edits</option>
-                <option value="auto">Auto</option>
-                <option value="bypassPermissions">Bypass Permissions</option>
-              </select>
-            </div>
-            <div class="field"><label>Max Turns</label><input id="agent-max-turns" type="number" placeholder="10"></div>
-            <div class="field">
-              <label>Effort Level</label>
-              <select id="agent-effort">
-                <option value="">— inherit —</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="xhigh">XHigh</option>
-                <option value="max">Max</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Isolation</label>
-              <select id="agent-isolation">
-                <option value="">— none —</option>
-                <option value="worktree">Worktree</option>
-              </select>
-            </div>
-            <div class="field"><label>Color</label><input id="agent-color" placeholder="e.g. blue, #ff6b35"></div>
-            <div class="field" style="display:flex;align-items:center;justify-content:space-between">
-              <div>
-                <div style="font-size:12px;font-weight:500">Run in Background</div>
-                <div style="font-size:11px;opacity:0.55">Start agent without waiting for completion</div>
-              </div>
-              <label class="toggle"><input type="checkbox" id="agent-background"><span class="toggle-slider"></span></label>
-            </div>
-          </div>
-          <div class="field">
-            <label>Skills (comma or space separated names)</label>
-            <input id="agent-skills" placeholder="my-skill another-skill">
-          </div>
-          <div class="field">
-            <label>MCP Servers (comma or space separated names)</label>
-            <input id="agent-mcp-servers" placeholder="my-server another-server">
-          </div>
-          <div class="field">
-            <label>Allowed Tools (space or comma separated)</label>
-            <input id="agent-tools" placeholder="Bash Read Write Edit Glob">
-          </div>
-          <div class="field">
-            <label>Disallowed Tools</label>
-            <input id="agent-disallowed-tools" placeholder="WebFetch WebSearch">
-          </div>
-          <div class="field">
-            <label>Initial Instructions</label>
-            <textarea id="agent-instructions" style="min-height:100px" placeholder="Describe what this agent should do..."></textarea>
-          </div>
-          <div class="row">
-            <button id="agent-create-confirm">Create Agent</button>
-            <button class="secondary" id="agent-create-cancel">Cancel</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Sandbox -->
-      <section id="sec-sandbox">
-        <div class="card">
-          <div class="card-header">Sandbox</div>
-          <div class="card-body">
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Enable Sandbox</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Run commands in an isolated sandbox environment</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="sandbox-enabled"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <label>Excluded Commands (not sandboxed)</label>
-              <div class="tag-list" id="sandbox-excluded-tags"></div>
-              <div class="row">
-                <input id="sandbox-excluded-input" placeholder="git" style="flex:1">
-                <button id="sandbox-excluded-add">Add</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Filesystem</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Allow Write</label>
-              <div class="tag-list" id="sandbox-allow-write-tags"></div>
-              <div class="row">
-                <input id="sandbox-allow-write-input" placeholder="/tmp/**" style="flex:1">
-                <button id="sandbox-allow-write-add">Add</button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Deny Write</label>
-              <div class="tag-list" id="sandbox-deny-write-tags"></div>
-              <div class="row">
-                <input id="sandbox-deny-write-input" placeholder="/etc/**" style="flex:1">
-                <button id="sandbox-deny-write-add">Add</button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Allow Read</label>
-              <div class="tag-list" id="sandbox-allow-read-tags"></div>
-              <div class="row">
-                <input id="sandbox-allow-read-input" placeholder="/usr/share/**" style="flex:1">
-                <button id="sandbox-allow-read-add">Add</button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Deny Read</label>
-              <div class="tag-list" id="sandbox-deny-read-tags"></div>
-              <div class="row">
-                <input id="sandbox-deny-read-input" placeholder="~/.ssh/**" style="flex:1">
-                <button id="sandbox-deny-read-add">Add</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Network</div>
-          <div class="card-body">
-            <div class="field">
-              <label>Allowed Domains</label>
-              <div class="tag-list" id="sandbox-allowed-domains-tags"></div>
-              <div class="row">
-                <input id="sandbox-allowed-domains-input" placeholder="api.example.com" style="flex:1">
-                <button id="sandbox-allowed-domains-add">Add</button>
-              </div>
-            </div>
-            <div class="field">
-              <label>Denied Domains</label>
-              <div class="tag-list" id="sandbox-denied-domains-tags"></div>
-              <div class="row">
-                <input id="sandbox-denied-domains-input" placeholder="*.tracking.com" style="flex:1">
-                <button id="sandbox-denied-domains-add">Add</button>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Allow Local Binding</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Allow binding to local network ports</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="sandbox-allow-local-binding"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="save-bar" style="border:none;padding-top:0">
-          <button id="save-sandbox">Save Sandbox</button>
-        </div>
-      </section>
-
-      <!-- App Config -->
-      <section id="sec-appconfig">
-        <div class="card" id="account-card">
-          <div class="card-header">Account</div>
-          <div class="card-body" id="account-body">
-            <div class="empty">Not logged in.</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">App Config (~/.claude.json)</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.6;margin-bottom:14px">Global user preferences stored in <code>~/.claude.json</code>. These apply to all projects.</div>
-            <div class="field">
-              <label>Editor Mode</label>
-              <select id="appconfig-editor-mode">
-                <option value="">— default —</option>
-                <option value="default">Default</option>
-                <option value="vim">Vim</option>
-              </select>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Auto Scroll</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Automatically scroll to the latest output</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="appconfig-auto-scroll"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Show Turn Duration</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Display how long each turn took</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="appconfig-show-turn-duration"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Terminal Progress Bar</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Show progress bar in terminal output</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="appconfig-terminal-progress"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Auto Connect IDE</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Automatically connect to IDE when available</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="appconfig-auto-connect-ide"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="field">
-              <div class="row" style="justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500">Auto Install IDE Extension</div>
-                  <div style="font-size:11px;opacity:0.55;margin-top:2px">Automatically install the Claude Code IDE extension</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="appconfig-auto-install-ext"><span class="toggle-slider"></span></label>
-              </div>
-            </div>
-            <div class="save-bar">
-              <button id="save-appconfig">Save</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Plugins</div>
-          <div class="card-body">
-            <div style="font-size:11px;opacity:0.55;margin-bottom:10px">Toggle installed plugins on or off.</div>
-            <div id="plugin-list"><div class="empty">No plugins installed.</div></div>
-            <div class="field" style="margin-top:14px">
-              <label>Extra Marketplaces</label>
-              <div style="font-size:11px;opacity:0.55;margin-bottom:6px">Additional plugin marketplace URLs.</div>
-              <div class="tag-list" id="marketplace-tags"></div>
-              <div class="row">
-                <input id="marketplace-input" placeholder="https://marketplace.example.com" style="flex:1">
-                <button id="marketplace-add">Add</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </div><!-- .content -->
-  </div><!-- .main-area -->
-
-  <!-- Sidebar (right) -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <h1>Claude Code</h1>
-      <div class="scope-switch">
-        <button class="scope-tab active" data-scope="project">Project</button>
-        <button class="scope-tab" data-scope="global">Global</button>
       </div>
     </div>
-    <nav class="nav">
-      <button class="nav-btn active" data-section="dashboard">
-        <span class="nav-icon">🏠</span> Dashboard
-      </button>
-      <button class="nav-btn project-only" data-section="init" id="nav-init">
-        <span class="nav-icon">🚀</span> Initialize
-      </button>
-      <div class="nav-group-label">Settings</div>
-      <button class="nav-btn" data-section="model">
-        <span class="nav-icon">⚙</span> Model
-      </button>
-      <button class="nav-btn" data-section="env">
-        <span class="nav-icon">🌿</span> Environment
-      </button>
-      <button class="nav-btn" data-section="advanced">
-        <span class="nav-icon">🔧</span> Advanced
-      </button>
-      <button class="nav-btn" data-section="mcp">
-        <span class="nav-icon">⚡</span> MCP Servers
-      </button>
-      <button class="nav-btn" data-section="permissions">
-        <span class="nav-icon">🔒</span> Permissions
-      </button>
-      <button class="nav-btn" data-section="hooks">
-        <span class="nav-icon">🪝</span> Hooks
-      </button>
-      <button class="nav-btn" data-section="sandbox">
-        <span class="nav-icon">📦</span> Sandbox
-      </button>
-      <button class="nav-btn" data-section="appconfig">
-        <span class="nav-icon">👤</span> App Config
-      </button>
-      <div class="nav-group-label project-only">Project Files</div>
-      <button class="nav-btn project-only" data-section="claudeMd">
-        <span class="nav-icon">📄</span> CLAUDE.md
-      </button>
-      <button class="nav-btn project-only" data-section="claudeIgnore">
-        <span class="nav-icon">🚫</span> .claudeignore
-      </button>
-      <button class="nav-btn project-only" data-section="rules">
-        <span class="nav-icon">📏</span> Rules
-      </button>
-      <button class="nav-btn project-only" data-section="commands">
-        <span class="nav-icon">💬</span> Commands
-      </button>
-      <button class="nav-btn project-only" data-section="skills">
-        <span class="nav-icon">🛠</span> Skills
-      </button>
-      <button class="nav-btn project-only" data-section="workflows">
-        <span class="nav-icon">🔄</span> Workflows
-      </button>
-      <button class="nav-btn project-only" data-section="agents">
-        <span class="nav-icon">🤖</span> Agents
-      </button>
-      <div class="nav-group-label">Memory</div>
-      <button class="nav-btn" data-section="memory">
-        <span class="nav-icon">🧠</span> Memory
-      </button>
-      <button class="nav-btn" data-section="plans">
-        <span class="nav-icon">📋</span> Plans
-      </button>
-    </nav>
-  </aside>
 
-  <div class="toast-container" id="toast-container"></div>
-
-  <!-- Diff overlay -->
-  <div id="diff-overlay">
-    <div id="diff-box">
-      <h3>Preview Changes</h3>
-      <div id="diff-scroll">
-        <div id="diff-content"></div>
-        <div id="diff-empty" class="empty" style="display:none">No changes detected.</div>
-      </div>
-      <div class="row" style="margin-top:12px;flex-shrink:0">
-        <button id="diff-save">Save</button>
-        <button class="secondary" id="diff-cancel">Cancel</button>
+    <!-- Import JSON overlay -->
+    <div id="import-overlay">
+      <div id="import-box">
+        <h3>Import Settings JSON</h3>
+        <div style="font-size: 11px; opacity: 0.55; margin-bottom: 10px">
+          Paste a <code>settings.json</code> object. Values will be merged into
+          the current scope.
+        </div>
+        <textarea
+          id="import-textarea"
+          placeholder='{"model": "claude-sonnet-4-6", "permissions": {...}}'
+        ></textarea>
+        <div id="import-error"></div>
+        <div class="row" style="margin-top: 12px">
+          <button id="import-apply">Apply</button>
+          <button class="secondary" id="import-cancel">Cancel</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Import JSON overlay -->
-  <div id="import-overlay">
-    <div id="import-box">
-      <h3>Import Settings JSON</h3>
-      <div style="font-size:11px;opacity:0.55;margin-bottom:10px">Paste a <code>settings.json</code> object. Values will be merged into the current scope.</div>
-      <textarea id="import-textarea" placeholder='{"model": "claude-sonnet-4-6", "permissions": {...}}'></textarea>
-      <div id="import-error"></div>
-      <div class="row" style="margin-top:12px">
-        <button id="import-apply">Apply</button>
-        <button class="secondary" id="import-cancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="main.js"></script>
-</body>
+    <script src="main.js"></script>
+  </body>
 </html>
