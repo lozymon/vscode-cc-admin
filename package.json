@@ -3,16 +3,33 @@
   "displayName": "CC Admin",
   "description": "Admin dashboard for Claude Code configuration",
   "version": "0.1.0",
+  "publisher": "lozymon",
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/lozymon/vscode-cc-admin.git"
+  },
+  "homepage": "https://github.com/lozymon/vscode-cc-admin#readme",
+  "bugs": {
+    "url": "https://github.com/lozymon/vscode-cc-admin/issues"
   },
   "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
+    "AI",
     "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "ai",
+    "agents",
+    "mcp",
+    "config",
+    "admin"
   ],
   "activationEvents": [
     "onStartupFinished"
