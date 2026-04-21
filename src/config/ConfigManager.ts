@@ -11,7 +11,7 @@ import {
   Settings,
   SettingsLocal,
 } from './schema';
-import { projectPaths, globalPaths, globalUserConfigPath } from './paths';
+import { projectPaths, globalPaths, globalUserConfigPath, getProjectMemoryDir } from './paths';
 
 export class ConfigManager {
   private _onDidChange = new vscode.EventEmitter<void>();
@@ -59,6 +59,8 @@ export class ConfigManager {
       agents: [],
       memoryMd: '',
       memory: [],
+      projectMemory: [],
+      plans: [],
     };
   }
 
@@ -150,6 +152,7 @@ export class ConfigManager {
     const g = globalPaths();
     const settings = this.readJson<Settings>(g.settingsJson) ?? {};
     if (!settings.permissions) settings.permissions = { allow: [], deny: [] };
+    const projectMemoryDir = getProjectMemoryDir();
 
     return {
       settings,
@@ -160,6 +163,8 @@ export class ConfigManager {
       agents: this.readMarkdownFiles(g.agents),
       memoryMd: this.readText(g.memoryMd),
       memory: this.readMemoryFiles(g.memory),
+      projectMemory: projectMemoryDir ? this.readMemoryFiles(projectMemoryDir) : [],
+      plans: this.readMarkdownFiles(g.plans),
     };
   }
 

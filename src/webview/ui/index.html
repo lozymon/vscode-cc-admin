@@ -1231,10 +1231,29 @@
           <button id="save-memory-md">Save</button>
         </div>
         <div class="card">
-          <div class="card-header">Memory Files</div>
+          <div class="card-header">Global Memory Files <span style="font-size:11px;opacity:0.6;font-weight:normal">~/.claude/memory/</span></div>
           <div class="card-body">
             <div class="file-list" id="memory-files-list"></div>
-            <div class="empty" id="memory-files-empty" style="display:none">No memory files.</div>
+            <div class="empty" id="memory-files-empty" style="display:none">No global memory files.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Project Memory Files <span style="font-size:11px;opacity:0.6;font-weight:normal">~/.claude/projects/&lt;slug&gt;/memory/</span></div>
+          <div class="card-body">
+            <div class="file-list" id="project-memory-files-list"></div>
+            <div class="empty" id="project-memory-files-empty" style="display:none">No project memory files.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Plans -->
+      <section id="sec-plans">
+        <div class="card">
+          <div class="card-header">Plans <span style="font-size:11px;opacity:0.6;font-weight:normal">~/.claude/plans/</span></div>
+          <div class="card-body">
+            <div style="font-size:11px;opacity:0.6;margin-bottom:10px">Active Claude Code plans created during conversations.</div>
+            <div class="file-list" id="plans-files-list"></div>
+            <div class="empty" id="plans-files-empty" style="display:none">No plans.</div>
           </div>
         </div>
       </section>
@@ -1582,6 +1601,9 @@
       <div class="nav-group-label">Memory</div>
       <button class="nav-btn" data-section="memory">
         <span class="nav-icon">🧠</span> Memory
+      </button>
+      <button class="nav-btn" data-section="plans">
+        <span class="nav-icon">📋</span> Plans
       </button>
     </nav>
   </aside>

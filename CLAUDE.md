@@ -35,6 +35,17 @@ The extension is a VSCode sidebar panel for managing Claude Code config. It has 
 
 - Wires `ConfigManager` → `ClaudeTreeProvider` → `WebviewPanel`. Registers four commands: `refresh`, `openSection`, `newFile`, `deleteFile`. The `configManager.onDidChange` handler refreshes both the tree and the open webview panel.
 
+## Global `~/.claude/` Directory Structure
+
+Beyond the managed config files, Claude Code uses several other directories in `~/.claude/`:
+
+- `plans/` — active plans created during Claude Code conversations (markdown files). Read-only in the extension; surfaced in the **Plans** nav section.
+- `projects/<slug>/` — per-project session data and conversation history. The slug is the absolute workspace path with `/` replaced by `-` (e.g. `/home/user/foo` → `-home-user-foo`). Contains a `memory/` subdirectory for project-scoped memory files.
+- `memory/` — global (cross-project) memory files. Surfaced in the **Memory** nav section alongside project memory.
+- `sessions/`, `cache/`, `backups/` — managed by Claude Code; not surfaced in the extension.
+
+`getProjectMemoryDir()` in `paths.ts` derives the project memory path from the current workspace root.
+
 ## Key Constraints
 
 - `vscode` is marked `external` in esbuild — never import it in UI files, only in `src/**/*.ts`.

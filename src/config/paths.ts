@@ -44,7 +44,15 @@ export function globalPaths() {
     agents: path.join(dir, 'agents'),
     memoryMd: path.join(dir, 'MEMORY.md'),
     memory: path.join(dir, 'memory'),
+    plans: path.join(dir, 'plans'),
   };
+}
+
+export function getProjectMemoryDir(): string | undefined {
+  const root = getProjectRoot();
+  if (!root) return undefined;
+  const slug = root.replace(/\//g, '-');
+  return path.join(getGlobalClaudeDir(), 'projects', slug, 'memory');
 }
 
 export function globalUserConfigPath(): string {

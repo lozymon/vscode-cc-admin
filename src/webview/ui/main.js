@@ -103,6 +103,7 @@ function render() {
   renderClaudeMd();
   renderClaudeIgnore();
   renderMemory();
+  renderPlans();
   renderFileSection('rules');
   renderFileSection('commands');
   renderFileSection('skills');
@@ -903,15 +904,9 @@ document.getElementById('save-claudeignore').addEventListener('click', () => {
 });
 
 // --- Memory ---
-function renderMemory() {
-  const glob = state.global;
-  const content = glob?.memoryMd ?? '';
-  const ed = getOrCreateMdEditor('memory-md-editor', content, () => markEditorDirty('save-memory-md'), '400px');
-  if (ed) ed.setValue(content);
-
-  const list = document.getElementById('memory-files-list');
-  const empty = document.getElementById('memory-files-empty');
-  const files = glob?.memory ?? [];
+function renderMemoryFileList(listId, emptyId, files) {
+  const list = document.getElementById(listId);
+  const empty = document.getElementById(emptyId);
   list.innerHTML = '';
   if (files.length === 0) {
     empty.style.display = '';
@@ -935,9 +930,48 @@ function renderMemory() {
   }
 }
 
+function renderMemory() {
+  const glob = state.global;
+  const content = glob?.memoryMd ?? '';
+  const ed = getOrCreateMdEditor('memory-md-editor', content, () => markEditorDirty('save-memory-md'), '400px');
+  if (ed) ed.setValue(content);
+
+  renderMemoryFileList('memory-files-list', 'memory-files-empty', glob?.memory ?? []);
+  renderMemoryFileList('project-memory-files-list', 'project-memory-files-empty', glob?.projectMemory ?? []);
+}
+
 document.getElementById('save-memory-md').addEventListener('click', () => {
   vscode.postMessage({ type: 'saveMemoryMd', content: editorValue('memory-md-editor') });
 });
+
+// --- Plans ---
+function renderPlans() {
+  const glob = state.global;
+  const files = glob?.plans ?? [];
+  const list = document.getElementById('plans-files-list');
+  const empty = document.getElementById('plans-files-empty');
+  list.innerHTML = '';
+  if (files.length === 0) {
+    empty.style.display = '';
+  } else {
+    empty.style.display = 'none';
+    files.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <span class="name">${esc(f.name)}</span>
+        <span class="desc">${esc(f.firstLine.replace(/^#+\s*/, ''))}</span>
+        <span class="actions">
+          <button class="icon-btn secondary open-plan" data-path="${esc(f.filePath)}">Open</button>
+        </span>
+      `;
+      list.appendChild(div);
+    });
+    list.querySelectorAll('.open-plan').forEach(btn => {
+      btn.addEventListener('click', () => vscode.postMessage({ type: 'openFile', filePath: btn.dataset.path }));
+    });
+  }
+}
 
 // --- File Sections (rules, commands, skills, workflows, agents) ---
 function renderFileSection(type) {

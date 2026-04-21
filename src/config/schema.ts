@@ -188,4 +188,6 @@ export interface GlobalConfig {
   agents: MarkdownFile[];
   memoryMd: string;
   memory: MemoryFile[];
+  projectMemory: MemoryFile[];
+  plans: MarkdownFile[];
 }
