@@ -22,12 +22,12 @@
     "commands": [
       {
         "command": "claudeAdmin.open",
-        "title": "Claude Code Admin: Open",
+        "title": "CC Admin: Open",
         "icon": "media/claude-icon.svg"
       },
       {
         "command": "claudeAdmin.refresh",
-        "title": "Claude Code Admin: Refresh",
+        "title": "CC Admin: Refresh",
         "icon": "$(refresh)"
       }
     ],

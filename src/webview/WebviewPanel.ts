@@ -23,7 +23,7 @@ export class WebviewPanel {
     const uiDir = vscode.Uri.file(path.join(context.extensionPath, 'src', 'webview', 'ui'));
     const panel = vscode.window.createWebviewPanel(
       'claudeAdmin',
-      'Claude Code Admin',
+      'CC Admin',
       vscode.ViewColumn.One,
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [uiDir] },
     );

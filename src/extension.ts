@@ -6,8 +6,8 @@ export function activate(context: vscode.ExtensionContext) {
   const configManager = new ConfigManager();
 
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBar.text = '$(gear) Claude Code';
-  statusBar.tooltip = 'Open Claude Code Admin';
+  statusBar.text = '$(gear) CC Admin';
+  statusBar.tooltip = 'Open CC Admin';
   statusBar.command = 'claudeAdmin.open';
   statusBar.show();
   context.subscriptions.push(statusBar);
